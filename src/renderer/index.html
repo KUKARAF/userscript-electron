@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>Userscript Browser</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <nav id="navbar" class="navbar">
+    <div class="traffic-light-spacer"></div>
+
+    <div class="nav-controls">
+      <button id="btn-back" class="nav-btn" title="Back" disabled>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+          <path d="M8.5 2L4 7l4.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </button>
+      <button id="btn-forward" class="nav-btn" title="Forward" disabled>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+          <path d="M5.5 2L10 7l-4.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </button>
+      <button id="btn-reload" class="nav-btn" title="Reload">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M12 7A5 5 0 1 1 7 2a5 5 0 0 1 3.5 1.5L12 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 2v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="nav-separator"></div>
+
+    <div id="tab-strip" class="tab-strip"></div>
+
+    <div id="page-title" class="page-title"></div>
+
+    <div class="right-controls">
+      <button id="btn-settings" class="nav-btn settings-btn" title="Settings">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor">
+          <path d="M7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M6.065 1a1 1 0 0 0-.97.757l-.272 1.083a5.5 5.5 0 0 0-.874.505l-1.07-.358a1 1 0 0 0-1.166.467l-.94 1.628a1 1 0 0 0 .201 1.24l.822.737a5.57 5.57 0 0 0 0 1.01l-.822.737a1 1 0 0 0-.2 1.24l.939 1.628a1 1 0 0 0 1.165.467l1.071-.358c.274.19.565.362.873.505l.273 1.083A1 1 0 0 0 6.065 14h2.87a1 1 0 0 0 .97-.757l.273-1.083a5.5 5.5 0 0 0 .873-.505l1.071.358a1 1 0 0 0 1.165-.467l.94-1.628a1 1 0 0 0-.201-1.24l-.822-.737a5.574 5.574 0 0 0 0-1.01l.822-.737a1 1 0 0 0 .2-1.24l-.939-1.628a1 1 0 0 0-1.165-.467l-1.071.358a5.5 5.5 0 0 0-.873-.505L9.904 1.757A1 1 0 0 0 8.935 1H6.065Zm-.578 2.25.21-.812h3.606l.21.812a1 1 0 0 0 .613.674 4.005 4.005 0 0 1 1.205.697 1 1 0 0 0 .913.19l.823-.275.724 1.254-.632.567a1 1 0 0 0-.31.893 4.073 4.073 0 0 1 0 1.478 1 1 0 0 0 .31.893l.632.567-.724 1.254-.823-.275a1 1 0 0 0-.913.19 4.006 4.006 0 0 1-1.205.698 1 1 0 0 0-.613.673l-.21.812H5.697l-.21-.812a1 1 0 0 0-.613-.673 4.005 4.005 0 0 1-1.205-.698 1 1 0 0 0-.913-.19l-.822.275-.724-1.254.631-.567a1 1 0 0 0 .31-.893 4.074 4.074 0 0 1 0-1.478 1 1 0 0 0-.31-.893l-.631-.567.724-1.254.822.275a1 1 0 0 0 .913-.19 4.006 4.006 0 0 1 1.205-.697 1 1 0 0 0 .613-.674Z"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div id="webview-container"></div>
+
+  <div id="settings-panel" class="settings-panel hidden">
+    <div class="settings-header">
+      <h2>Settings</h2>
+      <button id="btn-close-settings" class="icon-btn" title="Close">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <path d="M1 1l10 10M11 1 1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="settings-body">
+      <section class="settings-section">
+        <h3>API Token</h3>
+        <p class="settings-hint">Required for requesting userscripts from userscripts.osmosis.page</p>
+        <div class="input-row">
+          <input id="input-api-token" type="password" placeholder="egghead_..." autocomplete="off" spellcheck="false">
+          <button id="btn-save-token" class="btn-primary">Save</button>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h3>Pages</h3>
+        <div id="pages-list" class="pages-list"></div>
+        <button id="btn-add-page" class="btn-secondary">+ Add Page</button>
+      </section>
+    </div>
+    <div class="settings-footer">
+      <span id="app-version" class="version-label"></span>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
