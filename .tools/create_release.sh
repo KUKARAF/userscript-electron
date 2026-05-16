@@ -29,13 +29,17 @@ case "$MODE" in
 esac
 
 # Update package.json with valid semver (MAJOR.MINOR.0)
-npm version "${MAJOR}.${MINOR}.0" --no-git-tag-version --silent
+npm version "${MAJOR}.${MINOR}.0" --no-git-tag-version --allow-same-version --silent
 
 SHA=$(git rev-parse --short HEAD)
 TAG="v${MAJOR}.${MINOR}.${SHA}"
 
-git add package.json
-git commit -m "chore: release ${TAG}"
+# Only commit if package.json actually changed
+if ! git diff --quiet package.json; then
+  git add package.json
+  git commit -m "chore: release ${TAG}"
+fi
+
 git tag -a "${TAG}" -m "Release ${TAG}"
 
 echo ""
