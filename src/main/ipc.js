@@ -1,6 +1,8 @@
 import { ipcMain, app } from 'electron'
 import { join } from 'path'
 import store from './store.js'
+import { createTask, pollStatus, approveTask, rejectTask } from './api.js'
+import { saveScript, loadScriptCode, deleteScriptFile } from './scripts.js'
 
 export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('store:get', (_, key) => store.get(key))
@@ -15,4 +17,63 @@ export function registerIpcHandlers(mainWindow) {
     mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize()
   })
   ipcMain.handle('window:close', () => mainWindow.close())
+
+  // --- API ---
+
+  ipcMain.handle('api:create-task', async (_, data) => {
+    const token = store.get('apiToken')
+    return createTask(token, data)
+  })
+
+  ipcMain.handle('api:poll-status', (_, submission_token) => pollStatus(submission_token))
+
+  ipcMain.handle('api:approve-task', async (_, id) => {
+    const token = store.get('apiToken')
+    return approveTask(token, id)
+  })
+
+  ipcMain.handle('api:reject-task', async (_, id) => {
+    const token = store.get('apiToken')
+    return rejectTask(token, id)
+  })
+
+  // --- Script cache ---
+
+  ipcMain.handle('scripts:save', async (_, script) => {
+    await saveScript(script)
+    const scripts = store.get('scripts') || []
+    const idx = scripts.findIndex((s) => s.name === script.name)
+    const entry = { name: script.name, match_pattern: script.match_pattern, created_at: new Date().toISOString() }
+    if (idx >= 0) scripts[idx] = entry
+    else scripts.push(entry)
+    store.set('scripts', scripts)
+  })
+
+  ipcMain.handle('scripts:load-code', (_, name) => loadScriptCode(name))
+
+  ipcMain.handle('scripts:delete', async (_, name) => {
+    await deleteScriptFile(name)
+    store.set('scripts', (store.get('scripts') || []).filter((s) => s.name !== name))
+  })
+
+  // --- Keyboard shortcuts (intercepted before webview consumes them) ---
+
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return
+    const mod = process.platform === 'darwin' ? input.meta : input.control
+    if (!mod) return
+    if (input.key === '[') {
+      mainWindow.webContents.send('kb:back')
+      event.preventDefault()
+    } else if (input.key === ']') {
+      mainWindow.webContents.send('kb:forward')
+      event.preventDefault()
+    } else if (input.key === 'r' || input.key === 'R') {
+      mainWindow.webContents.send('kb:reload')
+      event.preventDefault()
+    } else if (input.key === ',') {
+      mainWindow.webContents.send('kb:settings')
+      event.preventDefault()
+    }
+  })
 }

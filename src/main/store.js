@@ -19,6 +19,8 @@ const store = new Store({
     },
     apiToken: { type: 'string', default: '' },
     autoInjectScripts: { type: 'boolean', default: true },
+    tasks: { type: 'array', default: [] },
+    scripts: { type: 'array', default: [] },
   },
 })
 
