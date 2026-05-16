@@ -1,0 +1,38 @@
+image: ubuntu/noble
+packages:
+  - curl
+  - libgtk-3-0
+  - libnotify4
+  - libnss3
+  - libxss1
+  - libxtst6
+  - libgbm1
+  - libsecret-1-0
+  - fuse
+sources:
+  - https://git.sr.ht/~burning_wipf/userscript-electron
+secrets:
+  - <YOUR_SECRET_UUID>  # hut config at ~/.config/hut/config — set up at builds.sr.ht/secrets
+environment:
+  TAG: ""
+tasks:
+  - install-node: |
+      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+      sudo apt-get install -y nodejs
+  - setup: |
+      cd userscript-electron
+      npm ci
+  - build: |
+      cd userscript-electron
+      npm run build -- --publish never
+  - upload: |
+      cd userscript-electron
+      tag=$(git describe --tags --exact-match 2>/dev/null || true)
+      if [ -z "$tag" ]; then
+        echo "Not a tagged commit, skipping artifact upload"
+        exit 0
+      fi
+      for f in dist/*.AppImage; do
+        [ -f "$f" ] || continue
+        hut git artifact upload --owner burning_wipf --repo userscript-electron --tag "$tag" "$f"
+      done
