@@ -1,4 +1,26 @@
-import emojiData from 'unicode-emoji-json'
+import emojiDatasource from 'emoji-datasource'
+
+const SKIN = {
+  '1F3FB': 'light skin tone',
+  '1F3FC': 'medium-light skin tone',
+  '1F3FD': 'medium skin tone',
+  '1F3FE': 'medium-dark skin tone',
+  '1F3FF': 'dark skin tone',
+}
+
+const toChar = unified => unified.split('-').map(cp => String.fromCodePoint(parseInt(cp, 16))).join('')
+
+const emojiNames = {}
+for (const e of emojiDatasource) {
+  const baseName = e.name.toLowerCase()
+  emojiNames[toChar(e.unified)] = baseName
+  if (e.non_qualified) emojiNames[toChar(e.non_qualified)] = baseName
+  if (e.skin_variations) {
+    for (const [tone, v] of Object.entries(e.skin_variations)) {
+      emojiNames[toChar(v.unified)] = `${baseName}: ${SKIN[tone] ?? ''}`
+    }
+  }
+}
 
 const { submit, onApproved, onError } = window.registerAPI
 
@@ -22,25 +44,14 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
   document.getElementById('btn-submit').disabled = true
   try {
     const emoji = await submit(name, email)
-    const SKIN_TONES = {
-      '\u{1F3FB}': 'light skin tone',
-      '\u{1F3FC}': 'medium-light skin tone',
-      '\u{1F3FD}': 'medium skin tone',
-      '\u{1F3FE}': 'medium-dark skin tone',
-      '\u{1F3FF}': 'dark skin tone',
-    }
     const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
     const chars = [...segmenter.segment(emoji)].map(s => s.segment)
     const list = document.getElementById('emoji-list')
     list.innerHTML = ''
     for (const char of chars) {
-      const toneMatch = char.match(/[\u{1F3FB}-\u{1F3FF}]/u)
-      const base = char.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '')
-      const baseName = emojiData[char]?.name ?? emojiData[base]?.name ?? ''
-      const name = toneMatch ? `${baseName}: ${SKIN_TONES[toneMatch[0]]}` : baseName
       const item = document.createElement('div')
       item.className = 'emoji-item'
-      item.innerHTML = `<span class="emoji">${char}</span><span class="emoji-name">${name}</span>`
+      item.innerHTML = `<span class="emoji">${char}</span><span class="emoji-name">${emojiNames[char] ?? ''}</span>`
       list.appendChild(item)
     }
     show('state-waiting')
