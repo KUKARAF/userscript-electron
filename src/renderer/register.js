@@ -1,28 +1,12 @@
-import emojiDatasource from 'emoji-datasource'
-
-const SKIN = {
-  '1F3FB': 'light skin tone',
-  '1F3FC': 'medium-light skin tone',
-  '1F3FD': 'medium skin tone',
-  '1F3FE': 'medium-dark skin tone',
-  '1F3FF': 'dark skin tone',
-}
-
-const toChar = unified => unified.split('-').map(cp => String.fromCodePoint(parseInt(cp, 16))).join('')
-
-const emojiNames = {}
-for (const e of emojiDatasource) {
-  const baseName = e.name.toLowerCase()
-  emojiNames[toChar(e.unified)] = baseName
-  if (e.non_qualified) emojiNames[toChar(e.non_qualified)] = baseName
-  if (e.skin_variations) {
-    for (const [tone, v] of Object.entries(e.skin_variations)) {
-      emojiNames[toChar(v.unified)] = `${baseName}: ${SKIN[tone] ?? ''}`
-    }
-  }
-}
+const BASE = 'https://userscripts.osmosis.page/api'
 
 const { submit, onApproved, onError } = window.registerAPI
+
+// Fetch the server's own emoji pool so names match exactly what the admin sees
+const emojiNamesPromise = fetch(`${BASE}/devices/emojis`)
+  .then(r => r.json())
+  .then(pool => Object.fromEntries(pool.map(({ e, n }) => [e, n])))
+  .catch(() => ({}))
 
 function show(stateId) {
   for (const el of document.querySelectorAll('[id^="state-"]')) el.classList.add('hidden')
@@ -43,15 +27,22 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
 
   document.getElementById('btn-submit').disabled = true
   try {
-    const emoji = await submit(name, email)
+    const [emoji, emojiNames] = await Promise.all([submit(name, email), emojiNamesPromise])
     const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
     const chars = [...segmenter.segment(emoji)].map(s => s.segment)
     const list = document.getElementById('emoji-list')
     list.innerHTML = ''
     for (const char of chars) {
+      const emojiSpan = document.createElement('span')
+      emojiSpan.className = 'emoji'
+      emojiSpan.textContent = char
+      const nameSpan = document.createElement('span')
+      nameSpan.className = 'emoji-name'
+      nameSpan.textContent = emojiNames[char] ?? ''
       const item = document.createElement('div')
       item.className = 'emoji-item'
-      item.innerHTML = `<span class="emoji">${char}</span><span class="emoji-name">${emojiNames[char] ?? ''}</span>`
+      item.appendChild(emojiSpan)
+      item.appendChild(nameSpan)
       list.appendChild(item)
     }
     show('state-waiting')
