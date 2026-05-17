@@ -22,7 +22,7 @@ async function init() {
   const version = await api.app.getVersion()
   document.getElementById('app-version').textContent = `v${version}`
 
-  const savedToken = await api.store.get('apiToken')
+  const savedToken = await api.token.load()
   if (savedToken) document.getElementById('input-api-token').value = savedToken
 
   // Resume polling for any in-progress tasks saved from last session
@@ -182,7 +182,7 @@ function wireSettingsPanel() {
 
   document.getElementById('btn-save-token').addEventListener('click', async () => {
     const token = document.getElementById('input-api-token').value.trim()
-    await api.store.set('apiToken', token)
+    await api.token.save(token)
     showToast('API token saved')
   })
 

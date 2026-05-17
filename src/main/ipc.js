@@ -3,6 +3,7 @@ import { join } from 'path'
 import store from './store.js'
 import { uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask } from './api.js'
 import { saveScript, loadScriptCode, deleteScriptFile } from './scripts.js'
+import { loadToken, saveToken, callWithAutoReregister } from './registration.js'
 
 export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('store:get', (_, key) => store.get(key))
@@ -18,29 +19,30 @@ export function registerIpcHandlers(mainWindow) {
   })
   ipcMain.handle('window:close', () => mainWindow.close())
 
+  // --- Token ---
+
+  ipcMain.handle('token:load', () => loadToken())
+  ipcMain.handle('token:save', (_, token) => saveToken(token))
+
   // --- API ---
 
-  ipcMain.handle('api:upload-html-chunk', async (_, data) => {
-    const token = store.get('apiToken')
-    return uploadHtmlChunk(token, data)
-  })
+  ipcMain.handle('api:upload-html-chunk', (_, data) =>
+    callWithAutoReregister(() => uploadHtmlChunk(loadToken(), data))
+  )
 
-  ipcMain.handle('api:create-task', async (_, data) => {
-    const token = store.get('apiToken')
-    return createTask(token, data)
-  })
+  ipcMain.handle('api:create-task', (_, data) =>
+    callWithAutoReregister(() => createTask(loadToken(), data))
+  )
 
   ipcMain.handle('api:poll-status', (_, submission_token) => pollStatus(submission_token))
 
-  ipcMain.handle('api:approve-task', async (_, id) => {
-    const token = store.get('apiToken')
-    return approveTask(token, id)
-  })
+  ipcMain.handle('api:approve-task', (_, id) =>
+    callWithAutoReregister(() => approveTask(loadToken(), id))
+  )
 
-  ipcMain.handle('api:reject-task', async (_, id) => {
-    const token = store.get('apiToken')
-    return rejectTask(token, id)
-  })
+  ipcMain.handle('api:reject-task', (_, id) =>
+    callWithAutoReregister(() => rejectTask(loadToken(), id))
+  )
 
   // --- Script cache ---
 

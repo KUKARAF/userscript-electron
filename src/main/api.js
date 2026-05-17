@@ -44,3 +44,19 @@ export async function rejectTask(token, id) {
   })
   if (!res.ok) throw new Error(`rejectTask ${res.status}`)
 }
+
+export async function registerDevice({ name, email }) {
+  const res = await fetch(`${BASE}/devices/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email }),
+  })
+  if (!res.ok) throw new Error(`registerDevice ${res.status}: ${await res.text()}`)
+  return res.json() // { id, emoji }
+}
+
+export async function pollRegistrationStatus(id) {
+  const res = await fetch(`${BASE}/devices/status/${id}`)
+  if (!res.ok) throw new Error(`pollRegistrationStatus ${res.status}`)
+  return res.json() // { status: 'pending'|'approved'|'rejected'|'expired', token? }
+}

@@ -24,6 +24,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     approveTask: (id) => ipcRenderer.invoke('api:approve-task', id),
     rejectTask: (id) => ipcRenderer.invoke('api:reject-task', id),
   },
+  token: {
+    load: () => ipcRenderer.invoke('token:load'),
+    save: (t) => ipcRenderer.invoke('token:save', t),
+  },
   scripts: {
     save: (script) => ipcRenderer.invoke('scripts:save', script),
     loadCode: (name) => ipcRenderer.invoke('scripts:load-code', name),

@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { registerIpcHandlers } from './ipc.js'
+import { ensureRegistered } from './registration.js'
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -28,7 +29,10 @@ function createWindow() {
   registerIpcHandlers(win)
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(async () => {
+  await ensureRegistered()
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

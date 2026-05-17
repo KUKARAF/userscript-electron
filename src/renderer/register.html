@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activate Device</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #2c2c2e;
+      color: #f5f5f7;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    h1 { font-size: 1.2rem; font-weight: 600; text-align: center }
+    .subtitle { font-size: 0.82rem; color: #8e8e93; text-align: center }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #3a3a3c;
+      background: #1c1c1e;
+      color: #f5f5f7;
+      font-size: 0.9rem;
+    }
+    input:focus { outline: none; border-color: #0a84ff }
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #0a84ff;
+      color: #fff;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed }
+    .btn-secondary {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #3a3a3c;
+      background: transparent;
+      color: #f5f5f7;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .emoji { font-size: 3rem; text-align: center; line-height: 1 }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid #3a3a3c;
+      border-top-color: #0a84ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 4px auto 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    .error { font-size: 0.82rem; color: #ff453a; text-align: center }
+    .success { font-size: 0.9rem; color: #30d158; text-align: center }
+    .hidden { display: none !important }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="state-form">
+      <h1>Activate Device</h1>
+      <p class="subtitle">Register this device to access the service.</p>
+      <input id="input-name" type="text" placeholder="Device name (e.g. My Laptop)" autocomplete="off" />
+      <input id="input-email" type="email" placeholder="Email address" autocomplete="email" />
+      <button class="btn-primary" id="btn-submit">Activate</button>
+      <p id="form-error" class="error hidden"></p>
+    </div>
+
+    <div id="state-waiting" class="hidden">
+      <h1>Confirm with your admin</h1>
+      <p class="subtitle">Show them this emoji:</p>
+      <div class="emoji" id="emoji-value"></div>
+      <div class="spinner"></div>
+      <p class="subtitle">Waiting for approval…</p>
+    </div>
+
+    <div id="state-approved" class="hidden">
+      <h1>Approved!</h1>
+      <p class="success">Device activated. Opening app…</p>
+    </div>
+
+    <div id="state-error" class="hidden">
+      <h1>Registration failed</h1>
+      <p class="error" id="error-message"></p>
+      <button class="btn-secondary" id="btn-retry">Close &amp; try again</button>
+    </div>
+  </div>
+  <script type="module" src="./register.js"></script>
+</body>
+</html>

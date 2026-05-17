@@ -17,9 +17,19 @@ export default defineConfig({
         input: {
           index: resolve('src/preload/index.js'),
           'webview-preload': resolve('src/preload/webview-preload.js'),
+          'register-preload': resolve('src/preload/register-preload.js'),
         },
       },
     },
   },
-  renderer: {},
+  renderer: {
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve('src/renderer/index.html'),
+          register: resolve('src/renderer/register.html'),
+        },
+      },
+    },
+  },
 })
