@@ -55,8 +55,10 @@
       cursor: pointer;
     }
     [id^="state-"] { display: flex; flex-direction: column; gap: 14px }
-    .emoji { font-size: 3rem; text-align: center; line-height: 1 }
-    .emoji-name { font-size: 0.82rem; color: #8e8e93; text-align: center; text-transform: capitalize }
+    .emoji-list { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap }
+    .emoji-item { display: flex; flex-direction: column; align-items: center; gap: 6px }
+    .emoji { font-size: 3rem; line-height: 1 }
+    .emoji-name { font-size: 0.75rem; color: #8e8e93; text-align: center; text-transform: capitalize }
     .spinner {
       width: 20px; height: 20px;
       border: 2px solid #3a3a3c;
@@ -85,8 +87,7 @@
     <div id="state-waiting" class="hidden">
       <h1>Confirm with your admin</h1>
       <p class="subtitle">Show them this emoji:</p>
-      <div class="emoji" id="emoji-value"></div>
-      <p class="emoji-name" id="emoji-name"></p>
+      <div class="emoji-list" id="emoji-list"></div>
       <div class="spinner"></div>
       <p class="subtitle">Waiting for approval…</p>
     </div>
