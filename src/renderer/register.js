@@ -22,13 +22,22 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
   document.getElementById('btn-submit').disabled = true
   try {
     const emoji = await submit(name, email)
+    const SKIN_TONES = {
+      '\u{1F3FB}': 'light skin tone',
+      '\u{1F3FC}': 'medium-light skin tone',
+      '\u{1F3FD}': 'medium skin tone',
+      '\u{1F3FE}': 'medium-dark skin tone',
+      '\u{1F3FF}': 'dark skin tone',
+    }
     const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
     const chars = [...segmenter.segment(emoji)].map(s => s.segment)
     const list = document.getElementById('emoji-list')
     list.innerHTML = ''
     for (const char of chars) {
+      const toneMatch = char.match(/[\u{1F3FB}-\u{1F3FF}]/u)
       const base = char.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '')
-      const name = emojiData[char]?.name ?? emojiData[base]?.name ?? ''
+      const baseName = emojiData[char]?.name ?? emojiData[base]?.name ?? ''
+      const name = toneMatch ? `${baseName}: ${SKIN_TONES[toneMatch[0]]}` : baseName
       const item = document.createElement('div')
       item.className = 'emoji-item'
       item.innerHTML = `<span class="emoji">${char}</span><span class="emoji-name">${name}</span>`
