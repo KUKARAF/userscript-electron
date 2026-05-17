@@ -9,11 +9,12 @@
     "preview": "electron-vite preview"
   },
   "dependencies": {
-    "electron-store": "^11.0.0"
+    "electron-store": "^11.0.0",
+    "unicode-emoji-json": "^0.9.0"
   },
   "devDependencies": {
     "electron": "^35.0.0",
-    "electron-vite": "^3.0.0",
-    "electron-builder": "^26.0.0"
+    "electron-builder": "^26.0.0",
+    "electron-vite": "^3.0.0"
   }
 }

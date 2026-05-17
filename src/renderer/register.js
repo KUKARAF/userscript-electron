@@ -1,3 +1,5 @@
+import emojiData from 'unicode-emoji-json'
+
 const { submit, onApproved, onError } = window.registerAPI
 
 function show(stateId) {
@@ -21,6 +23,7 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
   try {
     const emoji = await submit(name, email)
     document.getElementById('emoji-value').textContent = emoji
+    document.getElementById('emoji-name').textContent = emojiData[emoji]?.name ?? ''
     show('state-waiting')
   } catch (e) {
     document.getElementById('btn-submit').disabled = false
