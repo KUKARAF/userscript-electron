@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron'
 import { join } from 'path'
 import store from './store.js'
-import { createTask, pollStatus, approveTask, rejectTask } from './api.js'
+import { uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask } from './api.js'
 import { saveScript, loadScriptCode, deleteScriptFile } from './scripts.js'
 
 export function registerIpcHandlers(mainWindow) {
@@ -19,6 +19,11 @@ export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('window:close', () => mainWindow.close())
 
   // --- API ---
+
+  ipcMain.handle('api:upload-html-chunk', async (_, data) => {
+    const token = store.get('apiToken')
+    return uploadHtmlChunk(token, data)
+  })
 
   ipcMain.handle('api:create-task', async (_, data) => {
     const token = store.get('apiToken')

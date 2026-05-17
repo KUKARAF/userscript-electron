@@ -1,10 +1,23 @@
 const BASE = 'https://userscripts.osmosis.page/api'
 
-export async function createTask(token, { tab_url, prompt, page_html }) {
+export async function uploadHtmlChunk(token, { html_id, chunk_index, total_chunks, content }) {
+  const body = { chunk_index, total_chunks, content }
+  if (html_id) body.html_id = html_id
+  const res = await fetch(`${BASE}/html-chunks`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`uploadHtmlChunk ${res.status}: ${await res.text()}`)
+  return res.json() // { html_id, received, complete }
+}
+
+export async function createTask(token, payload) {
+  // payload: { tab_url, prompt, page_html? } or { tab_url, prompt, html_id? }
   const res = await fetch(`${BASE}/tasks`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tab_url, prompt, page_html }),
+    body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`createTask ${res.status}: ${await res.text()}`)
   return res.json()

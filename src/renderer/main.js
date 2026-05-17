@@ -367,8 +367,33 @@ async function requestScript(pageId) {
   submitBtn.textContent = 'Requesting…'
 
   try {
-    const page_html = await wv.executeJavaScript('document.documentElement.outerHTML')
-    const task = await api.api.createTask({ tab_url: page.url, prompt: promptText, page_html })
+    const page_html = await wv.executeJavaScript(`
+      (() => {
+        const doc = document.documentElement.cloneNode(true)
+        for (const el of doc.querySelectorAll('script')) el.textContent = ''
+        for (const el of doc.querySelectorAll('style')) el.textContent = ''
+        return doc.outerHTML
+      })()
+    `)
+
+    const CHUNK_SIZE = 500_000  // 500 KB per chunk
+    const INLINE_LIMIT = 100_000  // send inline below this size
+
+    let taskPayload
+    if (page_html.length <= INLINE_LIMIT) {
+      taskPayload = { tab_url: page.url, prompt: promptText, page_html }
+    } else {
+      const total_chunks = Math.ceil(page_html.length / CHUNK_SIZE)
+      let html_id = null
+      for (let i = 0; i < total_chunks; i++) {
+        const content = page_html.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
+        const res = await api.api.uploadHtmlChunk({ html_id, chunk_index: i, total_chunks, content })
+        html_id = res.html_id
+      }
+      taskPayload = { tab_url: page.url, prompt: promptText, html_id }
+    }
+
+    const task = await api.api.createTask(taskPayload)
 
     activeTasks[pageId] = { ...task, page_id: pageId, prompt: promptText }
     await persistTasks()

@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     close: () => ipcRenderer.invoke('window:close'),
   },
   api: {
+    uploadHtmlChunk: (data) => ipcRenderer.invoke('api:upload-html-chunk', data),
     createTask: (data) => ipcRenderer.invoke('api:create-task', data),
     pollStatus: (token) => ipcRenderer.invoke('api:poll-status', token),
     approveTask: (id) => ipcRenderer.invoke('api:approve-task', id),
