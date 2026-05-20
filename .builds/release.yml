@@ -11,8 +11,6 @@ packages:
   - fuse
 sources:
   - https://git.sr.ht/~burning_wipf/userscript-electron
-secrets:
-  - <YOUR_SECRET_UUID>  # hut config at ~/.config/hut/config — set up at builds.sr.ht/secrets
 environment:
   TAG: ""
 tasks:
@@ -32,6 +30,8 @@ tasks:
         echo "Not a tagged commit, skipping artifact upload"
         exit 0
       fi
+      # Note: To enable artifact uploads, create a secret at builds.sr.ht/secrets
+      # and reference its UUID in the secrets section above
       for f in dist/*.AppImage; do
         [ -f "$f" ] || continue
         hut git artifact upload --owner burning_wipf --repo userscript-electron --tag "$tag" "$f"
