@@ -22,4 +22,4 @@ tasks:
       cd userscript-electron
       npm run build -- --publish never
 artifacts:
-  - userscript-electron/dist/Userscript\ Browser-*.AppImage
+  - userscript-electron/dist/*.AppImage
