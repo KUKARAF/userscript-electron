@@ -21,5 +21,6 @@ tasks:
   - build: |
       cd userscript-electron
       npm run build -- --publish never
+      mv dist/Userscript\ Browser-*.AppImage dist/userscript-browser.AppImage
 artifacts:
-  - userscript-electron/dist/Userscript Browser-1.1.0.AppImage
+  - userscript-electron/dist/userscript-browser.AppImage
