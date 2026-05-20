@@ -11,32 +11,15 @@ packages:
   - fuse
 sources:
   - https://git.sr.ht/~burning_wipf/userscript-electron
-environment:
-  TAG: ""
 tasks:
   - install-node: |
       curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
       sudo apt-get install -y nodejs
-  - install-hut: |
-      curl -fsSL https://git.sr.ht/~sircmpwn/hut/refs/download/v0.7.4/hut-linux-amd64 -o /tmp/hut
-      chmod +x /tmp/hut
-      sudo mv /tmp/hut /usr/local/bin/hut
   - setup: |
       cd userscript-electron
       npm ci
   - build: |
       cd userscript-electron
       npm run build -- --publish never
-  - upload: |
-      cd userscript-electron
-      tag=$(git describe --tags --exact-match 2>/dev/null || true)
-      if [ -z "$tag" ]; then
-        echo "Not a tagged commit, skipping artifact upload"
-        exit 0
-      fi
-      # Note: To enable artifact uploads, create a secret at builds.sr.ht/secrets
-      # and reference its UUID in the secrets section above
-      for f in dist/*.AppImage; do
-        [ -f "$f" ] || continue
-        hut git artifact upload --owner burning_wipf --repo userscript-electron --tag "$tag" "$f"
-      done
+artifacts:
+  - userscript-electron/dist/Userscript\ Browser-*.AppImage
