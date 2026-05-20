@@ -1,3 +1,5 @@
+import fetch from 'node-fetch'
+
 const BASE = 'https://userscripts.osmosis.page/api'
 
 export async function uploadHtmlChunk(token, { html_id, chunk_index, total_chunks, content }) {
@@ -46,13 +48,20 @@ export async function rejectTask(token, id) {
 }
 
 export async function registerDevice({ name, email }) {
-  const res = await fetch(`${BASE}/devices/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email }),
-  })
-  if (!res.ok) throw new Error(`registerDevice ${res.status}: ${await res.text()}`)
-  return res.json() // { id, emoji }
+  try {
+    const res = await fetch(`${BASE}/devices/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email }),
+    })
+    if (!res.ok) throw new Error(`registerDevice ${res.status}: ${await res.text()}`)
+    return res.json() // { id, emoji }
+  } catch (err) {
+    if (err.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to registration service. Please check your internet connection.')
+    }
+    throw err
+  }
 }
 
 export async function pollRegistrationStatus(id) {
