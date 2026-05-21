@@ -1,5 +1,6 @@
 import { ipcMain, app } from 'electron'
 import { join } from 'path'
+import { autoUpdater } from 'electron-updater'
 import store from './store.js'
 import { uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask } from './api.js'
 import { saveScript, loadScriptCode, deleteScriptFile } from './scripts.js'
@@ -73,6 +74,11 @@ export function registerIpcHandlers(mainWindow) {
       platform: process.platform,
     })
   )
+
+  // --- Auto-Update ---
+
+  ipcMain.handle('updater:download', () => autoUpdater.downloadUpdate())
+  ipcMain.handle('updater:install', () => autoUpdater.quitAndInstall())
 
   // --- Keyboard shortcuts (intercepted before webview consumes them) ---
 

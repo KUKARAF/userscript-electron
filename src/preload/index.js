@@ -42,4 +42,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   issue: {
     report: (data) => ipcRenderer.invoke('issue:report', data),
   },
+  updater: {
+    onAvailable: (cb) => ipcRenderer.on('update:available', (_, info) => cb(info)),
+    onProgress: (cb) => ipcRenderer.on('update:progress', (_, pct) => cb(pct)),
+    onReady: (cb) => ipcRenderer.on('update:ready', () => cb()),
+    download: () => ipcRenderer.invoke('updater:download'),
+    install: () => ipcRenderer.invoke('updater:install'),
+  },
 })

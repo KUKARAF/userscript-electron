@@ -46,6 +46,7 @@ async function init() {
   wireSettingsPanel()
   wireRequestPanel()
   wireIssuePanel()
+  wireUpdater()
 }
 
 // --- Tabs ---
@@ -409,6 +410,58 @@ function clearIssueForm() {
   document.getElementById('input-issue-description').value = ''
   document.getElementById('input-issue-comment').value = ''
   document.getElementById('issue-status').classList.add('hidden')
+}
+
+// --- Update banner ---
+
+function wireUpdater() {
+  const banner = document.getElementById('update-banner')
+  const bannerText = document.getElementById('update-banner-text')
+  const actionBtn = document.getElementById('btn-update-action')
+  const dismissBtn = document.getElementById('btn-update-dismiss')
+
+  let updateInfo = null
+  let isDownloading = false
+
+  api.updater.onAvailable((info) => {
+    updateInfo = info
+    bannerText.textContent = `Update available: v${info.version}`
+    actionBtn.textContent = 'Download'
+    actionBtn.onclick = downloadUpdate
+    banner.classList.remove('hidden')
+  })
+
+  api.updater.onProgress((percent) => {
+    if (isDownloading) {
+      actionBtn.textContent = `Downloading… ${percent}%`
+    }
+  })
+
+  api.updater.onReady(() => {
+    bannerText.textContent = 'Update ready to install'
+    actionBtn.textContent = 'Restart Now'
+    actionBtn.onclick = installUpdate
+  })
+
+  async function downloadUpdate() {
+    isDownloading = true
+    actionBtn.disabled = true
+    try {
+      await api.updater.download()
+    } catch (err) {
+      console.error('Download failed:', err)
+      actionBtn.disabled = false
+      isDownloading = false
+    }
+  }
+
+  async function installUpdate() {
+    await api.updater.install()
+  }
+
+  dismissBtn.addEventListener('click', () => {
+    banner.classList.add('hidden')
+  })
 }
 
 function syncRequestPanelPosition() {

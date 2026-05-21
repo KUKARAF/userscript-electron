@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { registerIpcHandlers } from './ipc.js'
 import { ensureRegistered } from './registration.js'
+import { registerUpdater } from './updater.js'
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -27,6 +28,9 @@ function createWindow() {
   }
 
   registerIpcHandlers(win)
+  registerUpdater(win)
+
+  return win
 }
 
 app.whenReady().then(async () => {

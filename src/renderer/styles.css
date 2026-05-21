@@ -814,3 +814,44 @@ input::placeholder {
   border-color: rgba(255, 59, 48, 0.3);
   color: #ff3b30;
 }
+
+/* ─── Update banner ────────────────────────────────────────────── */
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.15), rgba(10, 132, 255, 0.05));
+  border-bottom: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 13px;
+  transition: transform 0.2s ease;
+}
+
+.update-banner.hidden {
+  display: none;
+}
+
+.update-banner #update-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+  height: auto;
+  white-space: nowrap;
+}
+
+.update-banner .icon-btn {
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: opacity 0.12s ease;
+}
+
+.update-banner .icon-btn:hover {
+  opacity: 1;
+}
