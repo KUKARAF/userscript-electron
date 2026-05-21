@@ -82,7 +82,6 @@ function renderWebviews() {
       const wv = document.createElement('webview')
       wv.src = page.url
       wv.setAttribute('preload', `file://${webviewPreloadPath}`)
-      wv.setAttribute('allowpopups', '')
 
       wv.addEventListener('dom-ready', () => {
         webviewsReady.add(page.id)
@@ -103,6 +102,12 @@ function renderWebviews() {
 
       wv.addEventListener('did-finish-load', () => {
         injectMatchingScripts(page.id, wv.getURL())
+      })
+
+      // Intercept new window attempts and redirect to same webview
+      wv.addEventListener('new-window', (e) => {
+        e.preventDefault()
+        wv.src = e.url
       })
 
       container.appendChild(wv)
