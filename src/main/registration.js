@@ -26,7 +26,7 @@ export function loadToken() {
   }
 }
 
-export async function ensureRegistered() {
+export async function ensureRegistered(isReregistration = false) {
   if (loadToken()) return
 
   ipcMain.removeHandler('register:submit')
@@ -56,7 +56,9 @@ export async function ensureRegistered() {
     win.on('closed', () => {
       winDestroyed = true
       ipcMain.removeHandler('register:submit')
-      if (!done) app.quit()
+      // Only quit the app if this is initial registration (not re-registration)
+      if (!done && !isReregistration) app.quit()
+      if (isReregistration && !done) resolve()
     })
 
     ipcMain.handle('register:submit', async (_, { name, email }) => {
@@ -107,7 +109,7 @@ export async function callWithAutoReregister(fn) {
   } catch (err) {
     if (err.message.includes('401')) {
       saveToken('')
-      await ensureRegistered()
+      await ensureRegistered(true)
       return fn()
     }
     throw err
