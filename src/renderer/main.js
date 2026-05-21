@@ -19,6 +19,20 @@ async function init() {
   pages = (await api.store.get('pages')) || []
   scripts = (await api.store.get('scripts')) || []
 
+  // Listen for server script updates
+  api.scripts.onUpdated((fresh) => {
+    scripts = fresh
+    renderScriptsList()
+  })
+
+  // Trigger script sync (loads from server, updates cache)
+  api.scripts.sync().then((fresh) => {
+    scripts = fresh
+    renderScriptsList()
+  }).catch(() => {
+    // Error syncing, but we have cached scripts from above
+  })
+
   const version = await api.app.getVersion()
   document.getElementById('app-version').textContent = `v${version}`
 
@@ -288,25 +302,18 @@ function renderScriptsList() {
 
     const pattern = document.createElement('span')
     pattern.className = 'script-pattern'
-    pattern.textContent = script.match_pattern || '—'
+    // Show first match pattern from metadata or the URL
+    try {
+      const metadata = JSON.parse(script.violentmonkey_metadata || '{}')
+      pattern.textContent = (metadata.match && metadata.match[0]) || script.url || '—'
+    } catch {
+      pattern.textContent = script.url || '—'
+    }
 
     info.appendChild(name)
     info.appendChild(pattern)
 
-    const delBtn = document.createElement('button')
-    delBtn.className = 'icon-btn delete-btn'
-    delBtn.title = 'Delete script'
-    delBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-      <path d="M1 1l9 9M10 1 1 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>`
-    delBtn.addEventListener('click', async () => {
-      await api.scripts.delete(script.name)
-      scripts = (await api.store.get('scripts')) || []
-      renderScriptsList()
-    })
-
     row.appendChild(info)
-    row.appendChild(delBtn)
     list.appendChild(row)
   }
 }
@@ -575,14 +582,14 @@ async function persistTasks() {
 }
 
 async function handleTaskDone(pageId, taskData) {
-  await api.scripts.save({
-    name: taskData.script_name,
-    code: taskData.script_code,
-    match_pattern: taskData.match_pattern,
-  })
-  scripts = (await api.store.get('scripts')) || []
-  showToast(`Script "${taskData.script_name}" ready to inject`)
-  // Don't auto-inject — let user manually inject after completing any page setup (e.g., device activation)
+  showToast(`Script "${taskData.script_name}" ready`)
+  // Sync scripts from server (newly generated script is now saved there)
+  try {
+    scripts = await api.scripts.sync()
+    renderScriptsList()
+  } catch (err) {
+    console.error('Failed to sync scripts:', err)
+  }
 }
 
 // --- Task status UI ---
@@ -661,13 +668,17 @@ async function injectMatchingScripts(pageId, url) {
 
   const matching = []
   for (const s of scripts) {
-    if (s.match_pattern && globMatch(s.match_pattern, url)) {
-      try {
-        const code = await api.scripts.loadCode(s.name)
-        matching.push({ name: s.name, code })
-      } catch {
-        // Script file missing — skip
-      }
+    // Parse violentmonkey metadata to get match patterns
+    let patterns = []
+    try {
+      patterns = JSON.parse(s.violentmonkey_metadata)?.match || []
+    } catch {
+      // Invalid metadata, skip
+    }
+
+    // Check if any pattern matches the URL
+    if (patterns.some(p => globMatch(p, url)) && s.script_code) {
+      matching.push({ name: s.name, code: s.script_code })
     }
   }
   if (matching.length) wv.send('inject-scripts', matching)

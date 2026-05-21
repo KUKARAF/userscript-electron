@@ -21,7 +21,7 @@ const store = new Store({
     deviceRegistrationId: { type: 'string', default: '' },
     autoInjectScripts: { type: 'boolean', default: true },
     tasks: { type: 'array', default: [] },
-    scripts: { type: 'array', default: [] },
+    scripts: { type: 'array', default: [], items: { type: 'object' } },
   },
 })
 

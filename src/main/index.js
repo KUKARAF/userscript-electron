@@ -1,8 +1,10 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { registerIpcHandlers } from './ipc.js'
-import { ensureRegistered } from './registration.js'
+import { ensureRegistered, loadToken } from './registration.js'
 import { registerUpdater } from './updater.js'
+import { fetchAssignedScripts } from './api.js'
+import store from './store.js'
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -29,8 +31,26 @@ function createWindow() {
 
   registerIpcHandlers(win)
   registerUpdater(win)
+  startScriptSync(win)
 
   return win
+}
+
+function startScriptSync(win) {
+  const sync = async () => {
+    try {
+      const token = loadToken()
+      if (!token) return
+      const scripts = await fetchAssignedScripts(token)
+      store.set('scripts', scripts)
+      win.webContents.send('scripts:updated', scripts)
+    } catch (err) {
+      console.error('Script sync failed:', err.message)
+    }
+  }
+  // Sync on startup then every 5 minutes
+  sync()
+  setInterval(sync, 5 * 60 * 1000)
 }
 
 app.whenReady().then(async () => {

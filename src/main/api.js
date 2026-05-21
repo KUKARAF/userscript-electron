@@ -69,3 +69,11 @@ export async function pollRegistrationStatus(id) {
   if (!res.ok) throw new Error(`pollRegistrationStatus ${res.status}`)
   return res.json() // { status: 'pending'|'approved'|'rejected'|'expired', token? }
 }
+
+export async function fetchAssignedScripts(token) {
+  const res = await fetch(`${BASE}/me/scripts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`fetchAssignedScripts ${res.status}`)
+  return res.json()
+}

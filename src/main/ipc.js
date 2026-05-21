@@ -2,8 +2,7 @@ import { ipcMain, app } from 'electron'
 import { join } from 'path'
 import { autoUpdater } from 'electron-updater'
 import store from './store.js'
-import { uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask } from './api.js'
-import { saveScript, loadScriptCode, deleteScriptFile } from './scripts.js'
+import { uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts } from './api.js'
 import { loadToken, saveToken, callWithAutoReregister } from './registration.js'
 import { reportIssue } from './issue-reporter.js'
 
@@ -46,23 +45,14 @@ export function registerIpcHandlers(mainWindow) {
     callWithAutoReregister(() => rejectTask(loadToken(), id))
   )
 
-  // --- Script cache ---
+  // --- Scripts sync ---
 
-  ipcMain.handle('scripts:save', async (_, script) => {
-    await saveScript(script)
-    const scripts = store.get('scripts') || []
-    const idx = scripts.findIndex((s) => s.name === script.name)
-    const entry = { name: script.name, match_pattern: script.match_pattern, created_at: new Date().toISOString() }
-    if (idx >= 0) scripts[idx] = entry
-    else scripts.push(entry)
+  ipcMain.handle('scripts:sync', async () => {
+    const token = loadToken()
+    if (!token) return []
+    const scripts = await fetchAssignedScripts(token)
     store.set('scripts', scripts)
-  })
-
-  ipcMain.handle('scripts:load-code', (_, name) => loadScriptCode(name))
-
-  ipcMain.handle('scripts:delete', async (_, name) => {
-    await deleteScriptFile(name)
-    store.set('scripts', (store.get('scripts') || []).filter((s) => s.name !== name))
+    return scripts
   })
 
   // --- Issue Reporting ---

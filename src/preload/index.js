@@ -29,9 +29,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     save: (t) => ipcRenderer.invoke('token:save', t),
   },
   scripts: {
-    save: (script) => ipcRenderer.invoke('scripts:save', script),
-    loadCode: (name) => ipcRenderer.invoke('scripts:load-code', name),
-    delete: (name) => ipcRenderer.invoke('scripts:delete', name),
+    sync: () => ipcRenderer.invoke('scripts:sync'),
+    onUpdated: (cb) => ipcRenderer.on('scripts:updated', (_, scripts) => cb(scripts)),
   },
   keyboard: {
     on: (channel, cb) => {
