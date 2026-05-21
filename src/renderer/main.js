@@ -624,48 +624,8 @@ function renderTaskStatus(pageId) {
     rationale.className = 'approval-rationale'
     rationale.textContent = task.price_rationale || ''
 
-    const actions = document.createElement('div')
-    actions.className = 'approval-actions'
-
-    const approveBtn = document.createElement('button')
-    approveBtn.className = 'btn-approve'
-    approveBtn.textContent = 'Approve'
-    approveBtn.addEventListener('click', async () => {
-      approveBtn.disabled = true
-      try {
-        await api.api.approveTask(task.id)
-        activeTasks[pageId] = { ...activeTasks[pageId], status: 'processing' }
-        await persistTasks()
-        renderTaskStatus(pageId)
-      } catch (err) {
-        showToast(`Approve failed: ${err.message}`)
-        approveBtn.disabled = false
-      }
-    })
-
-    const rejectBtn = document.createElement('button')
-    rejectBtn.className = 'btn-reject'
-    rejectBtn.textContent = 'Reject'
-    rejectBtn.addEventListener('click', async () => {
-      rejectBtn.disabled = true
-      try {
-        await api.api.rejectTask(task.id)
-        activeTasks[pageId] = { ...activeTasks[pageId], status: 'rejected' }
-        clearInterval(pollTimers[pageId])
-        delete pollTimers[pageId]
-        await persistTasks()
-        renderTaskStatus(pageId)
-      } catch (err) {
-        showToast(`Reject failed: ${err.message}`)
-        rejectBtn.disabled = false
-      }
-    })
-
-    actions.appendChild(approveBtn)
-    actions.appendChild(rejectBtn)
     block.appendChild(price)
     block.appendChild(rationale)
-    block.appendChild(actions)
     area.appendChild(block)
   } else if (task.status === 'done') {
     const done = document.createElement('div')
