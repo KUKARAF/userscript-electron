@@ -5,7 +5,7 @@ const store = new Store({
     pages: {
       type: 'array',
       default: [
-        { id: '1', name: 'Trans.eu', url: 'https://www.trans.eu/', enabled: true },
+        { id: '1', name: 'Trans.eu Freights', url: 'https://platform.trans.eu/freights/sent', enabled: true },
       ],
       items: {
         type: 'object',
