@@ -581,8 +581,8 @@ async function handleTaskDone(pageId, taskData) {
     match_pattern: taskData.match_pattern,
   })
   scripts = (await api.store.get('scripts')) || []
-  showToast(`Script "${taskData.script_name}" installed`)
-  injectMatchingScripts(pageId, webviews[pageId]?.getURL?.())
+  showToast(`Script "${taskData.script_name}" ready to inject`)
+  // Don't auto-inject — let user manually inject after completing any page setup (e.g., device activation)
 }
 
 // --- Task status UI ---
@@ -670,8 +670,19 @@ function renderTaskStatus(pageId) {
   } else if (task.status === 'done') {
     const done = document.createElement('div')
     done.className = 'task-done-name'
-    done.textContent = `Installed: ${task.script_name}`
+    done.textContent = `Ready: ${task.script_name}`
     area.appendChild(done)
+
+    const injectBtn = document.createElement('button')
+    injectBtn.className = 'btn-inject'
+    injectBtn.textContent = 'Inject Script'
+    injectBtn.addEventListener('click', () => {
+      injectMatchingScripts(pageId, webviews[pageId]?.getURL?.())
+      showToast(`Injected "${task.script_name}"`)
+      done.textContent = `Installed: ${task.script_name}`
+      injectBtn.remove()
+    })
+    area.appendChild(injectBtn)
   } else if (task.status === 'failed') {
     const err = document.createElement('div')
     err.className = 'task-error'
