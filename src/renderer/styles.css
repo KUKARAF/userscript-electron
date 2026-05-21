@@ -718,3 +718,99 @@ input::placeholder {
   text-overflow: ellipsis;
   font-family: monospace;
 }
+
+/* ─── Issue panel ──────────────────────────────────────────────── */
+
+.issue-panel {
+  position: fixed;
+  top: var(--navbar-height);
+  right: 0;
+  width: var(--settings-width);
+  height: calc(100vh - var(--navbar-height));
+  background: var(--settings-bg);
+  border-left: 1px solid var(--navbar-border);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(0);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+}
+
+.issue-panel.hidden {
+  transform: translateX(100%);
+  box-shadow: none;
+}
+
+.issue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--navbar-border);
+  flex-shrink: 0;
+}
+
+.issue-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.issue-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-tertiary) transparent;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-group textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font);
+  padding: 8px 10px;
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+  transition: border-color 0.12s ease;
+}
+
+.form-group textarea:focus {
+  border-color: var(--accent);
+}
+
+.issue-status {
+  padding: 12px;
+  background: rgba(48, 209, 88, 0.1);
+  border: 1px solid rgba(48, 209, 88, 0.3);
+  border-radius: var(--radius-sm);
+  color: #30d158;
+  font-size: 12px;
+  text-align: center;
+}
+
+.issue-status.error {
+  background: rgba(255, 59, 48, 0.1);
+  border-color: rgba(255, 59, 48, 0.3);
+  color: #ff3b30;
+}

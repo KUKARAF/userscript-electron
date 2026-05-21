@@ -45,6 +45,7 @@ async function init() {
   wireKeyboard()
   wireSettingsPanel()
   wireRequestPanel()
+  wireIssuePanel()
 }
 
 // --- Tabs ---
@@ -335,6 +336,74 @@ function wireRequestPanel() {
   document.getElementById('btn-submit-request').addEventListener('click', () => {
     requestScript(activePageId)
   })
+}
+
+// --- Issue panel ---
+
+function wireIssuePanel() {
+  const panel = document.getElementById('issue-panel')
+
+  document.getElementById('btn-report-issue').addEventListener('click', () => {
+    panel.classList.toggle('hidden')
+    if (!panel.classList.contains('hidden')) {
+      clearIssueForm()
+    }
+  })
+
+  document.getElementById('btn-close-issue').addEventListener('click', () => {
+    panel.classList.add('hidden')
+  })
+
+  document.getElementById('btn-submit-issue').addEventListener('click', () => {
+    submitIssueReport()
+  })
+}
+
+async function submitIssueReport() {
+  const title = document.getElementById('input-issue-title').value.trim()
+  const description = document.getElementById('input-issue-description').value.trim()
+  const userComment = document.getElementById('input-issue-comment').value.trim()
+
+  if (!title) {
+    showToast('Please enter an issue title')
+    return
+  }
+
+  const submitBtn = document.getElementById('btn-submit-issue')
+  const statusDiv = document.getElementById('issue-status')
+  submitBtn.disabled = true
+  submitBtn.textContent = 'Preparing…'
+
+  try {
+    const result = await api.issue.report({
+      title,
+      description,
+      userComment,
+    })
+
+    statusDiv.classList.remove('hidden', 'error')
+    statusDiv.textContent = '✓ Email client opened. Send to hi@osmosis.page'
+    setTimeout(() => {
+      statusDiv.classList.add('hidden')
+    }, 4000)
+
+    showToast('Send the encrypted file to hi@osmosis.page')
+  } catch (err) {
+    statusDiv.classList.remove('hidden')
+    statusDiv.classList.add('error')
+    statusDiv.textContent = `Error: ${err.message}`
+    showToast('Failed to open email client')
+  } finally {
+    submitBtn.disabled = false
+    submitBtn.textContent = 'Send Report'
+  }
+}
+
+function clearIssueForm() {
+  document.getElementById('input-issue-title').value = ''
+  document.getElementById('input-issue-description').value = ''
+  document.getElementById('input-issue-comment').value = ''
+  document.getElementById('issue-status').classList.add('hidden')
 }
 
 function syncRequestPanelPosition() {

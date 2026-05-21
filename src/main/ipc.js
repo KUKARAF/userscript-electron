@@ -4,6 +4,7 @@ import store from './store.js'
 import { uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask } from './api.js'
 import { saveScript, loadScriptCode, deleteScriptFile } from './scripts.js'
 import { loadToken, saveToken, callWithAutoReregister } from './registration.js'
+import { reportIssue } from './issue-reporter.js'
 
 export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('store:get', (_, key) => store.get(key))
@@ -62,6 +63,16 @@ export function registerIpcHandlers(mainWindow) {
     await deleteScriptFile(name)
     store.set('scripts', (store.get('scripts') || []).filter((s) => s.name !== name))
   })
+
+  // --- Issue Reporting ---
+
+  ipcMain.handle('issue:report', (_, issueData) =>
+    reportIssue({
+      ...issueData,
+      version: app.getVersion(),
+      platform: process.platform,
+    })
+  )
 
   // --- Keyboard shortcuts (intercepted before webview consumes them) ---
 

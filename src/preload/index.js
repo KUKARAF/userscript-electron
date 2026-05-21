@@ -39,4 +39,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       if (allowed.includes(channel)) ipcRenderer.on(channel, cb)
     },
   },
+  issue: {
+    report: (data) => ipcRenderer.invoke('issue:report', data),
+  },
 })
