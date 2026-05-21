@@ -216,6 +216,22 @@ function wireSettingsPanel() {
     })
     renderPagesList()
   })
+
+  document.getElementById('btn-check-scripts').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-check-scripts')
+    btn.disabled = true
+    btn.textContent = 'Checking…'
+    try {
+      scripts = await api.scripts.sync()
+      renderScriptsList()
+      showToast('Scripts updated')
+    } catch (err) {
+      showToast(`Failed to check for updates: ${err.message}`)
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Check for Updates'
+    }
+  })
 }
 
 function renderPagesList() {

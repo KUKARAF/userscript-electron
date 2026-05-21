@@ -48,9 +48,8 @@ function startScriptSync(win) {
       console.error('Script sync failed:', err.message)
     }
   }
-  // Sync on startup then every 5 minutes
+  // Sync on startup
   sync()
-  setInterval(sync, 5 * 60 * 1000)
 }
 
 app.whenReady().then(async () => {
