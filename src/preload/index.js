@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   scripts: {
     sync: () => ipcRenderer.invoke('scripts:sync'),
     onUpdated: (cb) => ipcRenderer.on('scripts:updated', (_, scripts) => cb(scripts)),
+    onSyncFailed: (cb) => ipcRenderer.on('scripts:sync-failed', (_, err) => cb(err)),
   },
   keyboard: {
     on: (channel, cb) => {

@@ -25,6 +25,11 @@ async function init() {
     renderScriptsList()
   })
 
+  // Listen for script sync failures
+  api.scripts.onSyncFailed((err) => {
+    showToast(`Script sync failed: ${err}`)
+  })
+
   // Trigger script sync (loads from server, updates cache)
   api.scripts.sync().then((fresh) => {
     scripts = fresh
@@ -42,7 +47,7 @@ async function init() {
   // Resume polling for any in-progress tasks saved from last session
   const savedTasks = (await api.store.get('tasks')) || []
   for (const task of savedTasks) {
-    if (!['done', 'failed', 'rejected'].includes(task.status)) {
+    if (!['done', 'failed', 'rejected'].includes(task.status) && pages.some((p) => p.id === task.page_id)) {
       activeTasks[task.page_id] = task
       startPolling(task.page_id)
     }
@@ -275,6 +280,10 @@ function renderPagesList() {
         webviews[page.id].remove()
         delete webviews[page.id]
         webviewsReady.delete(page.id)
+      }
+      if (pollTimers[page.id]) {
+        clearInterval(pollTimers[page.id])
+        delete pollTimers[page.id]
       }
       pages.splice(i, 1)
       if (activePageId === page.id) {
@@ -701,7 +710,19 @@ async function injectMatchingScripts(pageId, url) {
 }
 
 function globMatch(pattern, url) {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
+  const parts = pattern.split('[')
+  const escaped = parts.map((part, i) => {
+    if (i === 0) {
+      return part.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
+    }
+    const close = part.indexOf(']')
+    if (close === -1) {
+      return '[' + part.replace(/\\/g, '\\\\')
+    }
+    const inside = part.slice(0, close).replace(/\\/g, '\\\\')
+    const outside = part.slice(close + 1)
+    return '[' + inside + ']' + (outside ? outside.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') : '')
+  }).join('')
   return new RegExp(`^${escaped}$`).test(url)
 }
 

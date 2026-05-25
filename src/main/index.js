@@ -46,6 +46,7 @@ function startScriptSync(win) {
       win.webContents.send('scripts:updated', scripts)
     } catch (err) {
       console.error('Script sync failed:', err.message)
+      win.webContents.send('scripts:sync-failed', err.message)
     }
   }
   // Sync on startup
