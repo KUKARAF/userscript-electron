@@ -298,18 +298,6 @@ function renderPagesList() {
         showToast(`Failed to remove page: ${err.message}`)
         delBtn.disabled = false
       }
-      if (pollTimers[page.id]) {
-        clearInterval(pollTimers[page.id])
-        delete pollTimers[page.id]
-      }
-      pages.splice(i, 1)
-      if (activePageId === page.id) {
-        activePageId = pages[0]?.id || null
-      }
-      savePages()
-      renderPagesList()
-      renderTabs()
-      if (activePageId) showPage(activePageId)
     })
 
     row.appendChild(urlSpan)
