@@ -77,3 +77,38 @@ export async function fetchAssignedScripts(token) {
   if (!res.ok) throw new Error(`fetchAssignedScripts ${res.status}`)
   return res.json()
 }
+
+export async function fetchBrowsingSessions(token) {
+  const res = await fetch(`${BASE}/me/browsing-sessions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`fetchBrowsingSessions ${res.status}`)
+  return res.json()
+}
+
+export async function addSessionPage(token, sessionId, url) {
+  const res = await fetch(`${BASE}/me/browsing-sessions/${sessionId}/pages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  if (!res.ok) throw new Error(`addSessionPage ${res.status}: ${await res.text()}`)
+  return res.json()
+}
+
+export async function removeSessionPage(token, sessionId, pageId) {
+  const res = await fetch(`${BASE}/me/browsing-sessions/${sessionId}/pages/${pageId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`removeSessionPage ${res.status}`)
+}
+
+export async function reportError(token, sessionId, url, pageHtml) {
+  const res = await fetch(`${BASE}/sessions/${sessionId}/errors`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, page_html: pageHtml }),
+  })
+  if (!res.ok) throw new Error(`reportError ${res.status}`)
+}

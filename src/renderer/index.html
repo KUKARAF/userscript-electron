@@ -81,12 +81,16 @@
       <textarea id="input-prompt" class="prompt-textarea" placeholder="Describe what you want the script to do…" rows="5"></textarea>
       <button id="btn-submit-request" class="btn-primary">Request Script</button>
       <div id="task-status-area" class="task-status-area hidden"></div>
+      <div id="active-scripts-section" class="active-scripts-section hidden">
+        <div class="active-scripts-label">Active on this page</div>
+        <div id="active-scripts-list" class="active-scripts-list"></div>
+      </div>
     </div>
   </div>
 
   <div id="issue-panel" class="issue-panel hidden">
     <div class="issue-header">
-      <h2>Report Issue</h2>
+      <h2>Report Page Error</h2>
       <button id="btn-close-issue" class="icon-btn" title="Close">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
           <path d="M1 1l10 10M11 1 1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -94,18 +98,8 @@
       </button>
     </div>
     <div class="issue-body">
-      <div class="form-group">
-        <label for="input-issue-title">Issue Title *</label>
-        <input id="input-issue-title" type="text" placeholder="Brief description of the problem" required>
-      </div>
-      <div class="form-group">
-        <label for="input-issue-description">Description</label>
-        <textarea id="input-issue-description" placeholder="What were you doing when this happened? What did you expect?" rows="4"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="input-issue-comment">Additional Comments (optional)</label>
-        <textarea id="input-issue-comment" placeholder="Any extra information that might help us fix this…" rows="3"></textarea>
-      </div>
+      <p class="settings-hint">Captures the current page's HTML and sends it to the server for debugging.</p>
+      <p class="settings-hint" style="word-break:break-all;"><strong id="issue-page-url"></strong></p>
       <div id="issue-status" class="issue-status hidden"></div>
       <button id="btn-submit-issue" class="btn-primary">Send Report</button>
     </div>

@@ -15,6 +15,7 @@ files:
   - package.json
 
 mac:
+  identity: null
   category: public.app-category.productivity
   target:
     - target: dmg

@@ -528,6 +528,56 @@ input::placeholder {
   color: var(--text-tertiary);
 }
 
+/* ─── Active scripts section (request panel) ──────────────────── */
+
+.active-scripts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--navbar-border);
+}
+
+.active-scripts-section.hidden {
+  display: none;
+}
+
+.active-scripts-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-tertiary);
+}
+
+.active-scripts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.active-script-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.active-script-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #30d158;
+  flex-shrink: 0;
+}
+
+.active-script-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ─── Task status area ─────────────────────────────────────────── */
 
 .task-status-area {

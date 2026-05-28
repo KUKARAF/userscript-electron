@@ -2,20 +2,12 @@ import Store from 'electron-store'
 
 const store = new Store({
   schema: {
-    pages: {
+    // Pages are now managed server-side via browsing sessions.
+    // cachedPages is a local fallback for offline use: [{ id, session_id, url }]
+    cachedPages: {
       type: 'array',
-      default: [
-        { id: '1', name: 'Trans.eu Freights', url: 'https://platform.trans.eu/freights/sent', enabled: true },
-      ],
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-          url: { type: 'string' },
-          enabled: { type: 'boolean' },
-        },
-      },
+      default: [],
+      items: { type: 'object' },
     },
     apiToken: { type: 'string', default: '' },
     deviceRegistrationId: { type: 'string', default: '' },
