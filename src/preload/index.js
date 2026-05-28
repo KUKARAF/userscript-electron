@@ -39,8 +39,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       if (allowed.includes(channel)) ipcRenderer.on(channel, cb)
     },
   },
-  issue: {
-    report: (data) => ipcRenderer.invoke('issue:report', data),
+  sessions: {
+    fetchAll: () => ipcRenderer.invoke('api:fetch-sessions'),
+    addPage: (data) => ipcRenderer.invoke('api:add-page', data),
+    removePage: (data) => ipcRenderer.invoke('api:remove-page', data),
+    reportError: (data) => ipcRenderer.invoke('api:report-error', data),
   },
   updater: {
     onAvailable: (cb) => ipcRenderer.on('update:available', (_, info) => cb(info)),

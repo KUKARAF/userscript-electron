@@ -1,6 +1,6 @@
 const api = window.electronAPI
 
-let pages = []
+let pages = []        // [{ id, session_id, url }] — sourced from server
 let activePageId = null
 const webviews = {}
 const webviewsReady = new Set()
@@ -10,19 +10,23 @@ let scripts = []
 let activeTasks = {}  // pageId → task object
 let pollTimers = {}   // pageId → interval handle
 
+// Track the first available session_id for adding new pages
+let firstSessionId = null
+
 async function init() {
   const platform = await api.app.getPlatform()
   document.body.classList.add(`platform-${platform}`)
 
   webviewPreloadPath = await api.paths.webviewPreload()
 
-  pages = (await api.store.get('pages')) || []
+  pages = await loadPagesFromServer()
   scripts = (await api.store.get('scripts')) || []
 
   // Listen for server script updates
   api.scripts.onUpdated((fresh) => {
     scripts = fresh
     renderScriptsList()
+    updateRequestPanelForPage(activePageId)
   })
 
   // Listen for script sync failures
@@ -34,6 +38,7 @@ async function init() {
   api.scripts.sync().then((fresh) => {
     scripts = fresh
     renderScriptsList()
+    updateRequestPanelForPage(activePageId)
   }).catch(() => {
     // Error syncing, but we have cached scripts from above
   })
@@ -73,12 +78,12 @@ async function init() {
 function renderTabs() {
   const strip = document.getElementById('tab-strip')
   strip.innerHTML = ''
-  for (const page of pages.filter((p) => p.enabled)) {
+  for (const page of pages) {
     const btn = document.createElement('button')
     btn.className = 'tab' + (page.id === activePageId ? ' active' : '')
     btn.dataset.pageId = page.id
     btn.title = page.url
-    btn.textContent = page.name || page.url
+    try { btn.textContent = new URL(page.url).hostname } catch { btn.textContent = page.url }
     btn.addEventListener('click', () => showPage(page.id))
     strip.appendChild(btn)
   }
@@ -97,7 +102,7 @@ function renderWebviews() {
     }
   }
 
-  for (const page of pages.filter((p) => p.enabled)) {
+  for (const page of pages) {
     if (!webviews[page.id]) {
       const wv = document.createElement('webview')
       wv.src = page.url
@@ -117,11 +122,23 @@ function renderWebviews() {
         }
       })
 
-      wv.addEventListener('did-navigate', () => updateNavButtons())
-      wv.addEventListener('did-navigate-in-page', () => updateNavButtons())
+      wv.addEventListener('did-navigate', () => {
+        updateNavButtons()
+        if (page.id === activePageId) updateRequestPanelForPage(page.id)
+      })
+      wv.addEventListener('did-navigate-in-page', () => {
+        updateNavButtons()
+        if (page.id === activePageId) updateRequestPanelForPage(page.id)
+      })
 
       wv.addEventListener('did-finish-load', () => {
         injectMatchingScripts(page.id, wv.getURL())
+      })
+
+      wv.addEventListener('did-fail-load', (e) => {
+        // -3 = ERR_ABORTED (user navigated away), ignore those
+        if (e.errorCode === -3) return
+        autoReportError(page.id, e.validatedURL || page.url, e.errorDescription || `error ${e.errorCode}`)
       })
 
       // Intercept new window attempts and redirect to same webview
@@ -212,14 +229,19 @@ function wireSettingsPanel() {
     showToast('API token saved')
   })
 
-  document.getElementById('btn-add-page').addEventListener('click', () => {
-    pages.push({
-      id: Date.now().toString(),
-      name: '',
-      url: '',
-      enabled: true,
-    })
-    renderPagesList()
+  document.getElementById('btn-add-page').addEventListener('click', async () => {
+    if (!firstSessionId) {
+      showToast('Create a browsing session in the dashboard first')
+      return
+    }
+    const url = prompt('Page URL:')
+    if (!url || !url.trim()) return
+    try {
+      await api.sessions.addPage({ sessionId: firstSessionId, url: url.trim() })
+      await refreshPages()
+    } catch (err) {
+      showToast(`Failed to add page: ${err.message}`)
+    }
   })
 
   document.getElementById('btn-check-scripts').addEventListener('click', async () => {
@@ -243,31 +265,23 @@ function renderPagesList() {
   const list = document.getElementById('pages-list')
   list.innerHTML = ''
 
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i]
+  if (pages.length === 0 && !firstSessionId) {
+    const hint = document.createElement('p')
+    hint.className = 'settings-hint'
+    hint.textContent = 'No sessions found. Create one at the dashboard first.'
+    list.appendChild(hint)
+    return
+  }
+
+  for (const page of pages) {
     const row = document.createElement('div')
     row.className = 'page-row'
 
-    const nameInput = document.createElement('input')
-    nameInput.type = 'text'
-    nameInput.placeholder = 'Name'
-    nameInput.value = page.name
-    nameInput.className = 'page-input page-name'
-    nameInput.addEventListener('input', () => {
-      pages[i].name = nameInput.value
-      savePages()
-    })
-
-    const urlInput = document.createElement('input')
-    urlInput.type = 'url'
-    urlInput.placeholder = 'https://...'
-    urlInput.value = page.url
-    urlInput.className = 'page-input page-url'
-    urlInput.addEventListener('change', () => {
-      pages[i].url = urlInput.value
-      savePages()
-      rebuildWebview(page.id, urlInput.value)
-    })
+    const urlSpan = document.createElement('span')
+    urlSpan.className = 'page-input page-url'
+    urlSpan.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.85em;'
+    urlSpan.title = page.url
+    urlSpan.textContent = page.url
 
     const delBtn = document.createElement('button')
     delBtn.className = 'icon-btn delete-btn'
@@ -275,28 +289,18 @@ function renderPagesList() {
     delBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none">
       <path d="M1 1l9 9M10 1 1 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>`
-    delBtn.addEventListener('click', () => {
-      if (webviews[page.id]) {
-        webviews[page.id].remove()
-        delete webviews[page.id]
-        webviewsReady.delete(page.id)
+    delBtn.addEventListener('click', async () => {
+      delBtn.disabled = true
+      try {
+        await api.sessions.removePage({ sessionId: page.session_id, pageId: page.id })
+        await refreshPages()
+      } catch (err) {
+        showToast(`Failed to remove page: ${err.message}`)
+        delBtn.disabled = false
       }
-      if (pollTimers[page.id]) {
-        clearInterval(pollTimers[page.id])
-        delete pollTimers[page.id]
-      }
-      pages.splice(i, 1)
-      if (activePageId === page.id) {
-        activePageId = pages[0]?.id || null
-      }
-      savePages()
-      renderPagesList()
-      renderTabs()
-      if (activePageId) showPage(activePageId)
     })
 
-    row.appendChild(nameInput)
-    row.appendChild(urlInput)
+    row.appendChild(urlSpan)
     row.appendChild(delBtn)
     list.appendChild(row)
   }
@@ -343,17 +347,8 @@ function renderScriptsList() {
   }
 }
 
-function rebuildWebview(id, url) {
-  if (webviews[id]) {
-    webviews[id].src = url
-  }
-}
 
-async function savePages() {
-  await api.store.set('pages', pages)
-  renderTabs()
-  renderWebviews()
-}
+// Pages are server-managed; local mutations go through the API.
 
 // --- Request panel ---
 
@@ -376,7 +371,7 @@ function wireRequestPanel() {
   })
 }
 
-// --- Issue panel ---
+// --- Error reporting panel ---
 
 function wireIssuePanel() {
   const panel = document.getElementById('issue-panel')
@@ -384,7 +379,10 @@ function wireIssuePanel() {
   document.getElementById('btn-report-issue').addEventListener('click', () => {
     panel.classList.toggle('hidden')
     if (!panel.classList.contains('hidden')) {
-      clearIssueForm()
+      const page = pages.find((p) => p.id === activePageId)
+      const urlEl = document.getElementById('issue-page-url')
+      if (urlEl) urlEl.textContent = page?.url || '—'
+      document.getElementById('issue-status').classList.add('hidden')
     }
   })
 
@@ -392,56 +390,57 @@ function wireIssuePanel() {
     panel.classList.add('hidden')
   })
 
-  document.getElementById('btn-submit-issue').addEventListener('click', () => {
-    submitIssueReport()
-  })
+  document.getElementById('btn-submit-issue').addEventListener('click', submitIssueReport)
 }
 
 async function submitIssueReport() {
-  const title = document.getElementById('input-issue-title').value.trim()
-  const description = document.getElementById('input-issue-description').value.trim()
-  const userComment = document.getElementById('input-issue-comment').value.trim()
-
-  if (!title) {
-    showToast('Please enter an issue title')
+  const page = pages.find((p) => p.id === activePageId)
+  if (!page) {
+    showToast('No active page to report')
     return
   }
 
+  const wv = webviews[activePageId]
   const submitBtn = document.getElementById('btn-submit-issue')
   const statusDiv = document.getElementById('issue-status')
   submitBtn.disabled = true
-  submitBtn.textContent = 'Preparing…'
+  submitBtn.textContent = 'Sending…'
 
   try {
-    const result = await api.issue.report({
-      title,
-      description,
-      userComment,
+    const pageHtml = wv
+      ? await wv.executeJavaScript('document.documentElement.outerHTML').catch(() => '<html><body>Could not capture HTML</body></html>')
+      : '<html><body>Webview not available</body></html>'
+
+    await api.sessions.reportError({
+      sessionId: page.session_id,
+      url: wv?.getURL() || page.url,
+      pageHtml,
     })
 
     statusDiv.classList.remove('hidden', 'error')
-    statusDiv.textContent = '✓ Email client opened. Send to hi@osmosis.page'
-    setTimeout(() => {
-      statusDiv.classList.add('hidden')
-    }, 4000)
-
-    showToast('Send the encrypted file to hi@osmosis.page')
+    statusDiv.textContent = '✓ Error report sent'
+    setTimeout(() => statusDiv.classList.add('hidden'), 3000)
+    showToast('Error report sent')
   } catch (err) {
     statusDiv.classList.remove('hidden')
     statusDiv.classList.add('error')
     statusDiv.textContent = `Error: ${err.message}`
-    showToast('Failed to open email client')
   } finally {
     submitBtn.disabled = false
     submitBtn.textContent = 'Send Report'
   }
 }
 
-function clearIssueForm() {
-  document.getElementById('input-issue-title').value = ''
-  document.getElementById('input-issue-description').value = ''
-  document.getElementById('input-issue-comment').value = ''
-  document.getElementById('issue-status').classList.add('hidden')
+async function autoReportError(pageId, url, errorDescription) {
+  const page = pages.find((p) => p.id === pageId)
+  if (!page?.session_id) return
+  const pageHtml = `<html><body><pre>Load error: ${errorDescription}\nURL: ${url}</pre></body></html>`
+  try {
+    await api.sessions.reportError({ sessionId: page.session_id, url, pageHtml })
+    console.log('[error-report] auto-reported load failure for', url)
+  } catch (err) {
+    console.warn('[error-report] failed to auto-report:', err.message)
+  }
 }
 
 // --- Update banner ---
@@ -503,9 +502,50 @@ function syncRequestPanelPosition() {
 }
 
 function updateRequestPanelForPage(pageId) {
+  const wv = webviews[pageId]
   const page = pages.find((p) => p.id === pageId)
-  document.getElementById('request-url-label').textContent = page?.url || ''
+  const url = (wv && webviewsReady.has(pageId) ? wv.getURL() : null) || page?.url || ''
+  document.getElementById('request-url-label').textContent = url
   renderTaskStatus(pageId)
+  renderActiveScripts(url)
+}
+
+function renderActiveScripts(url) {
+  const section = document.getElementById('active-scripts-section')
+  const list = document.getElementById('active-scripts-list')
+  list.innerHTML = ''
+
+  const matching = scripts.filter((s) => {
+    if (!s.script_code) return false
+    try {
+      const patterns = JSON.parse(s.violentmonkey_metadata || '{}')?.match || []
+      return patterns.some((p) => globMatch(p, url))
+    } catch {
+      return false
+    }
+  })
+
+  if (matching.length === 0) {
+    section.classList.add('hidden')
+    return
+  }
+
+  section.classList.remove('hidden')
+  for (const s of matching) {
+    const row = document.createElement('div')
+    row.className = 'active-script-row'
+
+    const dot = document.createElement('span')
+    dot.className = 'active-script-dot'
+
+    const name = document.createElement('span')
+    name.className = 'active-script-name'
+    name.textContent = s.name
+
+    row.appendChild(dot)
+    row.appendChild(name)
+    list.appendChild(row)
+  }
 }
 
 async function requestScript(pageId) {
@@ -741,6 +781,40 @@ function showToast(message) {
     toast.classList.remove('visible')
     setTimeout(() => toast.remove(), 300)
   }, 2000)
+}
+
+// --- Server-side pages ---
+
+async function loadPagesFromServer() {
+  try {
+    const sessions = await api.sessions.fetchAll()
+    const all = []
+    firstSessionId = sessions[0]?.id || null
+    for (const session of sessions) {
+      for (const page of session.pages) {
+        all.push({ id: page.id, session_id: session.id, url: page.url })
+      }
+    }
+    await api.store.set('cachedPages', all)
+    return all
+  } catch (err) {
+    console.warn('Failed to load pages from server, using cache:', err.message)
+    const cached = (await api.store.get('cachedPages')) || []
+    firstSessionId = cached[0]?.session_id || null
+    return cached
+  }
+}
+
+async function refreshPages() {
+  pages = await loadPagesFromServer()
+  renderPagesList()
+  renderTabs()
+  renderWebviews()
+  if (activePageId && !pages.find((p) => p.id === activePageId)) {
+    activePageId = pages[0]?.id || null
+  }
+  if (activePageId) showPage(activePageId)
+  else if (pages.length > 0) showPage(pages[0].id)
 }
 
 // --- Boot ---

@@ -2,9 +2,11 @@ import { ipcMain, app } from 'electron'
 import { join } from 'path'
 import { autoUpdater } from 'electron-updater'
 import store from './store.js'
-import { uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts } from './api.js'
+import {
+  uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts,
+  fetchBrowsingSessions, addSessionPage, removeSessionPage, reportError,
+} from './api.js'
 import { loadToken, saveToken, callWithAutoReregister } from './registration.js'
-import { reportIssue } from './issue-reporter.js'
 
 export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('store:get', (_, key) => store.get(key))
@@ -55,14 +57,22 @@ export function registerIpcHandlers(mainWindow) {
     return scripts
   })
 
-  // --- Issue Reporting ---
+  // --- Browsing Sessions / Pages ---
 
-  ipcMain.handle('issue:report', (_, issueData) =>
-    reportIssue({
-      ...issueData,
-      version: app.getVersion(),
-      platform: process.platform,
-    })
+  ipcMain.handle('api:fetch-sessions', () =>
+    callWithAutoReregister(() => fetchBrowsingSessions(loadToken()))
+  )
+
+  ipcMain.handle('api:add-page', (_, { sessionId, url }) =>
+    callWithAutoReregister(() => addSessionPage(loadToken(), sessionId, url))
+  )
+
+  ipcMain.handle('api:remove-page', (_, { sessionId, pageId }) =>
+    callWithAutoReregister(() => removeSessionPage(loadToken(), sessionId, pageId))
+  )
+
+  ipcMain.handle('api:report-error', (_, { sessionId, url, pageHtml }) =>
+    callWithAutoReregister(() => reportError(loadToken(), sessionId, url, pageHtml))
   )
 
   // --- Auto-Update ---
