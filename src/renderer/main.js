@@ -22,11 +22,12 @@ async function init() {
   pages = await loadPagesFromServer()
   scripts = (await api.store.get('scripts')) || []
 
-  // Listen for server script updates
+  // Listen for server script updates (background sync from main process)
   api.scripts.onUpdated((fresh) => {
     scripts = fresh
     renderScriptsList()
     updateRequestPanelForPage(activePageId)
+    refreshPages()
   })
 
   // Listen for script sync failures
@@ -39,6 +40,7 @@ async function init() {
     scripts = fresh
     renderScriptsList()
     updateRequestPanelForPage(activePageId)
+    refreshPages()
   }).catch(() => {
     // Error syncing, but we have cached scripts from above
   })
@@ -283,25 +285,28 @@ function renderPagesList() {
     urlSpan.title = page.url
     urlSpan.textContent = page.url
 
-    const delBtn = document.createElement('button')
-    delBtn.className = 'icon-btn delete-btn'
-    delBtn.title = 'Remove'
-    delBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-      <path d="M1 1l9 9M10 1 1 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>`
-    delBtn.addEventListener('click', async () => {
-      delBtn.disabled = true
-      try {
-        await api.sessions.removePage({ sessionId: page.session_id, pageId: page.id })
-        await refreshPages()
-      } catch (err) {
-        showToast(`Failed to remove page: ${err.message}`)
-        delBtn.disabled = false
-      }
-    })
-
     row.appendChild(urlSpan)
-    row.appendChild(delBtn)
+
+    if (page.session_id) {
+      const delBtn = document.createElement('button')
+      delBtn.className = 'icon-btn delete-btn'
+      delBtn.title = 'Remove'
+      delBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <path d="M1 1l9 9M10 1 1 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>`
+      delBtn.addEventListener('click', async () => {
+        delBtn.disabled = true
+        try {
+          await api.sessions.removePage({ sessionId: page.session_id, pageId: page.id })
+          await refreshPages()
+        } catch (err) {
+          showToast(`Failed to remove page: ${err.message}`)
+          delBtn.disabled = false
+        }
+      })
+      row.appendChild(delBtn)
+    }
+
     list.appendChild(row)
   }
 }
@@ -319,6 +324,7 @@ function renderScriptsList() {
   }
 
   for (const script of scripts) {
+    const headers = parseScriptHeaders(script.script_code || '')
     const row = document.createElement('div')
     row.className = 'script-row'
 
@@ -327,17 +333,11 @@ function renderScriptsList() {
 
     const name = document.createElement('span')
     name.className = 'script-name'
-    name.textContent = script.name
+    name.textContent = headers.name || script.name || 'Script'
 
     const pattern = document.createElement('span')
     pattern.className = 'script-pattern'
-    // Show first match pattern from metadata or the URL
-    try {
-      const metadata = JSON.parse(script.violentmonkey_metadata || '{}')
-      pattern.textContent = (metadata.match && metadata.match[0]) || script.url || '—'
-    } catch {
-      pattern.textContent = script.url || '—'
-    }
+    pattern.textContent = (headers.match && headers.match[0]) || headers.url || '—'
 
     info.appendChild(name)
     info.appendChild(pattern)
@@ -517,12 +517,8 @@ function renderActiveScripts(url) {
 
   const matching = scripts.filter((s) => {
     if (!s.script_code) return false
-    try {
-      const patterns = JSON.parse(s.violentmonkey_metadata || '{}')?.match || []
-      return patterns.some((p) => globMatch(p, url))
-    } catch {
-      return false
-    }
+    const headers = parseScriptHeaders(s.script_code)
+    return (headers.match || []).some((p) => globMatch(p, url))
   })
 
   if (matching.length === 0) {
@@ -532,6 +528,7 @@ function renderActiveScripts(url) {
 
   section.classList.remove('hidden')
   for (const s of matching) {
+    const headers = parseScriptHeaders(s.script_code || '')
     const row = document.createElement('div')
     row.className = 'active-script-row'
 
@@ -540,7 +537,7 @@ function renderActiveScripts(url) {
 
     const name = document.createElement('span')
     name.className = 'active-script-name'
-    name.textContent = s.name
+    name.textContent = headers.name || s.name || 'Script'
 
     row.appendChild(dot)
     row.appendChild(name)
@@ -733,20 +730,34 @@ async function injectMatchingScripts(pageId, url) {
 
   const matching = []
   for (const s of scripts) {
-    // Parse violentmonkey metadata to get match patterns
-    let patterns = []
-    try {
-      patterns = JSON.parse(s.violentmonkey_metadata)?.match || []
-    } catch {
-      // Invalid metadata, skip
-    }
-
-    // Check if any pattern matches the URL
-    if (patterns.some(p => globMatch(p, url)) && s.script_code) {
-      matching.push({ name: s.name, code: s.script_code })
+    if (!s.script_code) continue
+    const headers = parseScriptHeaders(s.script_code)
+    if ((headers.match || []).some(p => globMatch(p, url))) {
+      matching.push({ name: headers.name || s.name || 'Script', code: s.script_code })
     }
   }
   if (matching.length) wv.send('inject-scripts', matching)
+}
+
+// --- Script header parsing ---
+
+function parseScriptHeaders(code) {
+  const result = {}
+  const block = code.match(/\/\/ ==UserScript==([\s\S]*?)\/\/ ==\/UserScript==/)
+  if (!block) return result
+  for (const line of block[1].split('\n')) {
+    const m = line.match(/\/\/ @(\S+)\s+(.+)/)
+    if (!m) continue
+    const key = m[1]
+    const val = m[2].trim()
+    if (key === 'match') {
+      if (!result.match) result.match = []
+      result.match.push(val)
+    } else {
+      result[key] = val
+    }
+  }
+  return result
 }
 
 function globMatch(pattern, url) {
@@ -787,14 +798,32 @@ function showToast(message) {
 
 async function loadPagesFromServer() {
   try {
-    const sessions = await api.sessions.fetchAll()
+    const [sessions, cachedScripts] = await Promise.all([
+      api.sessions.fetchAll().catch(() => []),
+      api.store.get('scripts').then(s => s || []),
+    ])
+
     const all = []
+    const seenUrls = new Set()
     firstSessionId = sessions[0]?.id || null
+
     for (const session of sessions) {
       for (const page of session.pages) {
         all.push({ id: page.id, session_id: session.id, url: page.url })
+        seenUrls.add(page.url)
       }
     }
+
+    // Add pages derived from assigned scripts' @url headers
+    for (const script of cachedScripts) {
+      const headers = parseScriptHeaders(script.script_code || '')
+      const url = headers.url
+      if (url && !seenUrls.has(url)) {
+        all.push({ id: `script-${script.id}`, session_id: null, url })
+        seenUrls.add(url)
+      }
+    }
+
     await api.store.set('cachedPages', all)
     return all
   } catch (err) {
