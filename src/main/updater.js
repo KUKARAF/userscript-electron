@@ -21,5 +21,5 @@ export function registerUpdater(mainWindow) {
   })
 
   // Check for updates on startup (after a short delay so window is rendered)
-  setTimeout(() => autoUpdater.checkForUpdates(), 3000)
+  setTimeout(() => autoUpdater.checkForUpdates().catch(err => console.error('Updater check failed:', err)), 3000)
 }
