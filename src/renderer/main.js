@@ -814,10 +814,10 @@ async function loadPagesFromServer() {
       }
     }
 
-    // Add pages derived from assigned scripts' @url headers
+    // Add pages derived from assigned scripts (@url header, falling back to script.url field)
     for (const script of cachedScripts) {
       const headers = parseScriptHeaders(script.script_code || '')
-      const url = headers.url
+      const url = headers.url || script.url
       if (url && !seenUrls.has(url)) {
         all.push({ id: `script-${script.id}`, session_id: null, url })
         seenUrls.add(url)
