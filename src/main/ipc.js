@@ -5,6 +5,7 @@ import store from './store.js'
 import {
   uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts,
   fetchBrowsingSessions, createBrowsingSession, addSessionPage, updateSessionPage, removeSessionPage, reportError,
+  refineScript,
 } from './api.js'
 import { loadToken, saveToken, callApi, callWithAutoReregister, ensureRegistered } from './registration.js'
 
@@ -81,6 +82,10 @@ export function registerIpcHandlers(mainWindow) {
 
   ipcMain.handle('api:report-error', (_, { sessionId, url, pageHtml }) =>
     callApi(() => reportError(loadToken(), sessionId, url, pageHtml))
+  )
+
+  ipcMain.handle('api:refine-script', (_, { scriptId, ...payload }) =>
+    callApi(() => refineScript(loadToken(), scriptId, payload))
   )
 
   ipcMain.handle('device:reregister', () => ensureRegistered(true))

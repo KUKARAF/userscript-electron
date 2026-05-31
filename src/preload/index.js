@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     pollStatus: (token) => ipcRenderer.invoke('api:poll-status', token),
     approveTask: (id) => ipcRenderer.invoke('api:approve-task', id),
     rejectTask: (id) => ipcRenderer.invoke('api:reject-task', id),
+    refineScript: (data) => ipcRenderer.invoke('api:refine-script', data),
   },
   token: {
     load: () => ipcRenderer.invoke('token:load'),

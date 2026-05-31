@@ -79,7 +79,11 @@
     <div class="request-body">
       <p id="request-url-label" class="request-url-label"></p>
       <textarea id="input-prompt" class="prompt-textarea" placeholder="Describe what you want the script to do…" rows="5"></textarea>
-      <button id="btn-submit-request" class="btn-primary">Request Script</button>
+      <div id="refine-context" style="display:none;font-size:0.85em;opacity:0.7;margin-bottom:6px;">Refining: <span id="refine-script-name"></span></div>
+      <div style="display:flex;gap:6px;">
+        <button id="btn-submit-request" class="btn-primary">Request Script</button>
+        <button id="btn-new-script" class="btn-secondary" style="display:none;">New Script</button>
+      </div>
       <div id="task-status-area" class="task-status-area hidden"></div>
       <div id="active-scripts-section" class="active-scripts-section hidden">
         <div class="active-scripts-label">Active on this page</div>

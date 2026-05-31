@@ -123,6 +123,16 @@ export async function removeSessionPage(token, sessionId, pageId) {
   if (!res.ok) throw new Error(`removeSessionPage ${res.status}`)
 }
 
+export async function refineScript(token, scriptId, payload) {
+  const res = await fetch(`${BASE}/me/scripts/${scriptId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`refineScript ${res.status}: ${await res.text()}`)
+  return res.json()
+}
+
 export async function reportError(token, sessionId, url, pageHtml) {
   const res = await fetch(`${BASE}/sessions/${sessionId}/errors`, {
     method: 'POST',

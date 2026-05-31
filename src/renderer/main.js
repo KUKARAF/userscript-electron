@@ -13,6 +13,9 @@ let pollTimers = {}   // pageId → interval handle
 // Track the first available session_id for adding new pages
 let firstSessionId = null
 
+// Script id of a matching installed script (enables refine mode in request panel)
+let refinableScriptId = null
+
 async function init() {
   const platform = await api.app.getPlatform()
   document.body.classList.add(`platform-${platform}`)
@@ -417,6 +420,10 @@ function wireRequestPanel() {
   document.getElementById('btn-submit-request').addEventListener('click', () => {
     requestScript(activePageId)
   })
+
+  document.getElementById('btn-new-script').addEventListener('click', () => {
+    setRefineMode(null, null)
+  })
 }
 
 // --- Error reporting panel ---
@@ -558,6 +565,24 @@ function updateRequestPanelForPage(pageId) {
   renderActiveScripts(url)
 }
 
+function setRefineMode(scriptId, scriptName) {
+  refinableScriptId = scriptId
+  const submitBtn = document.getElementById('btn-submit-request')
+  const newScriptBtn = document.getElementById('btn-new-script')
+  const refineCtx = document.getElementById('refine-context')
+  const refineNameEl = document.getElementById('refine-script-name')
+  if (scriptId) {
+    submitBtn.textContent = 'Refine Script'
+    newScriptBtn.style.display = ''
+    refineCtx.style.display = ''
+    if (refineNameEl) refineNameEl.textContent = scriptName || ''
+  } else {
+    submitBtn.textContent = 'Request Script'
+    newScriptBtn.style.display = 'none'
+    refineCtx.style.display = 'none'
+  }
+}
+
 function renderActiveScripts(url) {
   const section = document.getElementById('active-scripts-section')
   const list = document.getElementById('active-scripts-list')
@@ -571,6 +596,7 @@ function renderActiveScripts(url) {
 
   if (matching.length === 0) {
     section.classList.add('hidden')
+    setRefineMode(null, null)
     return
   }
 
@@ -591,6 +617,11 @@ function renderActiveScripts(url) {
     row.appendChild(name)
     list.appendChild(row)
   }
+
+  // Enable refine mode for the first matching script
+  const first = matching[0]
+  const firstHeaders = parseScriptHeaders(first.script_code || '')
+  setRefineMode(first.id, firstHeaders.name || first.name || 'Script')
 }
 
 async function requestScript(pageId) {
@@ -606,9 +637,12 @@ async function requestScript(pageId) {
     return
   }
 
+  const isRefine = !!refinableScriptId
+  const scriptId = refinableScriptId
+
   const submitBtn = document.getElementById('btn-submit-request')
   submitBtn.disabled = true
-  submitBtn.textContent = 'Requesting…'
+  submitBtn.textContent = isRefine ? 'Refining…' : 'Requesting…'
 
   try {
     const page_html = await wv.executeJavaScript(`
@@ -623,21 +657,38 @@ async function requestScript(pageId) {
     const CHUNK_SIZE = 500_000  // 500 KB per chunk
     const INLINE_LIMIT = 100_000  // send inline below this size
 
-    let taskPayload
-    if (page_html.length <= INLINE_LIMIT) {
-      taskPayload = { tab_url: page.url, prompt: promptText, page_html }
-    } else {
-      const total_chunks = Math.ceil(page_html.length / CHUNK_SIZE)
-      let html_id = null
-      for (let i = 0; i < total_chunks; i++) {
-        const content = page_html.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
-        const res = await api.api.uploadHtmlChunk({ html_id, chunk_index: i, total_chunks, content })
-        html_id = res.html_id
+    let task
+    if (isRefine) {
+      let payload
+      if (page_html.length <= INLINE_LIMIT) {
+        payload = { scriptId, prompt: promptText, page_html }
+      } else {
+        const total_chunks = Math.ceil(page_html.length / CHUNK_SIZE)
+        let html_id = null
+        for (let i = 0; i < total_chunks; i++) {
+          const content = page_html.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
+          const res = await api.api.uploadHtmlChunk({ html_id, chunk_index: i, total_chunks, content })
+          html_id = res.html_id
+        }
+        payload = { scriptId, prompt: promptText, html_id }
       }
-      taskPayload = { tab_url: page.url, prompt: promptText, html_id }
+      task = await api.api.refineScript(payload)
+    } else {
+      let taskPayload
+      if (page_html.length <= INLINE_LIMIT) {
+        taskPayload = { tab_url: page.url, prompt: promptText, page_html }
+      } else {
+        const total_chunks = Math.ceil(page_html.length / CHUNK_SIZE)
+        let html_id = null
+        for (let i = 0; i < total_chunks; i++) {
+          const content = page_html.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
+          const res = await api.api.uploadHtmlChunk({ html_id, chunk_index: i, total_chunks, content })
+          html_id = res.html_id
+        }
+        taskPayload = { tab_url: page.url, prompt: promptText, html_id }
+      }
+      task = await api.api.createTask(taskPayload)
     }
-
-    const task = await api.api.createTask(taskPayload)
 
     activeTasks[pageId] = { ...task, page_id: pageId, prompt: promptText }
     await persistTasks()
@@ -648,7 +699,7 @@ async function requestScript(pageId) {
     showToast(`Error: ${err.message}`)
   } finally {
     submitBtn.disabled = false
-    submitBtn.textContent = 'Request Script'
+    submitBtn.textContent = isRefine ? 'Refine Script' : 'Request Script'
   }
 }
 
