@@ -106,6 +106,15 @@ export async function addSessionPage(token, sessionId, url) {
   return res.json()
 }
 
+export async function updateSessionPage(token, sessionId, pageId, url) {
+  const res = await fetch(`${BASE}/me/browsing-sessions/${sessionId}/pages/${pageId}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  if (!res.ok) throw new Error(`updateSessionPage ${res.status}: ${await res.text()}`)
+}
+
 export async function removeSessionPage(token, sessionId, pageId) {
   const res = await fetch(`${BASE}/me/browsing-sessions/${sessionId}/pages/${pageId}`, {
     method: 'DELETE',

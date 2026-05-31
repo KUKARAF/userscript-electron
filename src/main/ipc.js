@@ -4,7 +4,7 @@ import { autoUpdater } from 'electron-updater'
 import store from './store.js'
 import {
   uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts,
-  fetchBrowsingSessions, createBrowsingSession, addSessionPage, removeSessionPage, reportError,
+  fetchBrowsingSessions, createBrowsingSession, addSessionPage, updateSessionPage, removeSessionPage, reportError,
 } from './api.js'
 import { loadToken, saveToken, callWithAutoReregister } from './registration.js'
 
@@ -69,6 +69,10 @@ export function registerIpcHandlers(mainWindow) {
 
   ipcMain.handle('api:add-page', (_, { sessionId, url }) =>
     callWithAutoReregister(() => addSessionPage(loadToken(), sessionId, url))
+  )
+
+  ipcMain.handle('api:update-page', (_, { sessionId, pageId, url }) =>
+    callWithAutoReregister(() => updateSessionPage(loadToken(), sessionId, pageId, url))
   )
 
   ipcMain.handle('api:remove-page', (_, { sessionId, pageId }) =>

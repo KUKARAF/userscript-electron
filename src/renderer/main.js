@@ -271,15 +271,27 @@ function renderPagesList() {
     const row = document.createElement('div')
     row.className = 'page-row'
 
-    const urlSpan = document.createElement('span')
-    urlSpan.className = 'page-input page-url'
-    urlSpan.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.85em;'
-    urlSpan.title = page.url
-    urlSpan.textContent = page.url
-
-    row.appendChild(urlSpan)
-
     if (page.session_id) {
+      const input = document.createElement('input')
+      input.type = 'text'
+      input.value = page.url
+      input.className = 'page-input page-url'
+      input.style.cssText = 'flex:1;font-size:0.85em;'
+
+      const save = async () => {
+        const newUrl = input.value.trim()
+        if (!newUrl || newUrl === page.url) return
+        try {
+          await api.sessions.updatePage({ sessionId: page.session_id, pageId: page.id, url: newUrl })
+          await refreshPages()
+        } catch (err) {
+          showToast(`Failed to update page: ${err.message}`)
+          input.value = page.url
+        }
+      }
+      input.addEventListener('blur', save)
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur() })
+
       const delBtn = document.createElement('button')
       delBtn.className = 'icon-btn delete-btn'
       delBtn.title = 'Remove'
@@ -296,7 +308,16 @@ function renderPagesList() {
           delBtn.disabled = false
         }
       })
+
+      row.appendChild(input)
       row.appendChild(delBtn)
+    } else {
+      const urlSpan = document.createElement('span')
+      urlSpan.className = 'page-input page-url'
+      urlSpan.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.85em;'
+      urlSpan.title = page.url
+      urlSpan.textContent = page.url
+      row.appendChild(urlSpan)
     }
 
     list.appendChild(row)

@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     fetchAll: () => ipcRenderer.invoke('api:fetch-sessions'),
     create: () => ipcRenderer.invoke('api:create-session'),
     addPage: (data) => ipcRenderer.invoke('api:add-page', data),
+    updatePage: (data) => ipcRenderer.invoke('api:update-page', data),
     removePage: (data) => ipcRenderer.invoke('api:remove-page', data),
     reportError: (data) => ipcRenderer.invoke('api:report-error', data),
   },
