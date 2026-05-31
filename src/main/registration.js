@@ -103,12 +103,20 @@ async function pollForToken({ id, win, onDone, resolve, isDestroyed }, maxAttemp
   if (!isDestroyed()) win.webContents.send('register:error', 'Approval timed out (10 min). Please restart.')
 }
 
+export async function callApi(fn) {
+  try {
+    return await fn()
+  } catch (err) {
+    if (err.message.includes('401')) throw new Error('Token expired')
+    throw err
+  }
+}
+
 export async function callWithAutoReregister(fn) {
   try {
     return await fn()
   } catch (err) {
     if (err.message.includes('401')) {
-      saveToken('')
       await ensureRegistered(true)
       return fn()
     }

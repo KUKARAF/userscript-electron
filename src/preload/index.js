@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     load: () => ipcRenderer.invoke('token:load'),
     save: (t) => ipcRenderer.invoke('token:save', t),
   },
+  device: {
+    reregister: () => ipcRenderer.invoke('device:reregister'),
+  },
   scripts: {
     sync: () => ipcRenderer.invoke('scripts:sync'),
     onUpdated: (cb) => ipcRenderer.on('scripts:updated', (_, scripts) => cb(scripts)),

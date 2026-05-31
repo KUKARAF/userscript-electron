@@ -6,7 +6,7 @@ import {
   uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts,
   fetchBrowsingSessions, createBrowsingSession, addSessionPage, updateSessionPage, removeSessionPage, reportError,
 } from './api.js'
-import { loadToken, saveToken, callWithAutoReregister } from './registration.js'
+import { loadToken, saveToken, callApi, callWithAutoReregister, ensureRegistered } from './registration.js'
 
 export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('store:get', (_, key) => store.get(key))
@@ -30,21 +30,21 @@ export function registerIpcHandlers(mainWindow) {
   // --- API ---
 
   ipcMain.handle('api:upload-html-chunk', (_, data) =>
-    callWithAutoReregister(() => uploadHtmlChunk(loadToken(), data))
+    callApi(() => uploadHtmlChunk(loadToken(), data))
   )
 
   ipcMain.handle('api:create-task', (_, data) =>
-    callWithAutoReregister(() => createTask(loadToken(), data))
+    callApi(() => createTask(loadToken(), data))
   )
 
   ipcMain.handle('api:poll-status', (_, submission_token) => pollStatus(submission_token))
 
   ipcMain.handle('api:approve-task', (_, id) =>
-    callWithAutoReregister(() => approveTask(loadToken(), id))
+    callApi(() => approveTask(loadToken(), id))
   )
 
   ipcMain.handle('api:reject-task', (_, id) =>
-    callWithAutoReregister(() => rejectTask(loadToken(), id))
+    callApi(() => rejectTask(loadToken(), id))
   )
 
   // --- Scripts sync ---
@@ -60,28 +60,30 @@ export function registerIpcHandlers(mainWindow) {
   // --- Browsing Sessions / Pages ---
 
   ipcMain.handle('api:fetch-sessions', () =>
-    callWithAutoReregister(() => fetchBrowsingSessions(loadToken()))
+    callApi(() => fetchBrowsingSessions(loadToken()))
   )
 
   ipcMain.handle('api:create-session', () =>
-    callWithAutoReregister(() => createBrowsingSession(loadToken(), 'Default'))
+    callApi(() => createBrowsingSession(loadToken(), 'Default'))
   )
 
   ipcMain.handle('api:add-page', (_, { sessionId, url }) =>
-    callWithAutoReregister(() => addSessionPage(loadToken(), sessionId, url))
+    callApi(() => addSessionPage(loadToken(), sessionId, url))
   )
 
   ipcMain.handle('api:update-page', (_, { sessionId, pageId, url }) =>
-    callWithAutoReregister(() => updateSessionPage(loadToken(), sessionId, pageId, url))
+    callApi(() => updateSessionPage(loadToken(), sessionId, pageId, url))
   )
 
   ipcMain.handle('api:remove-page', (_, { sessionId, pageId }) =>
-    callWithAutoReregister(() => removeSessionPage(loadToken(), sessionId, pageId))
+    callApi(() => removeSessionPage(loadToken(), sessionId, pageId))
   )
 
   ipcMain.handle('api:report-error', (_, { sessionId, url, pageHtml }) =>
-    callWithAutoReregister(() => reportError(loadToken(), sessionId, url, pageHtml))
+    callApi(() => reportError(loadToken(), sessionId, url, pageHtml))
   )
+
+  ipcMain.handle('device:reregister', () => ensureRegistered(true))
 
   // --- Auto-Update ---
 

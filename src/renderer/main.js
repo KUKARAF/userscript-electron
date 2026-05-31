@@ -30,8 +30,9 @@ async function init() {
     refreshPages()
   })
 
-  // Listen for script sync failures
+  // Listen for script sync failures (suppress 401 — app works from cache)
   api.scripts.onSyncFailed((err) => {
+    if (err.includes('401') || err.includes('Token expired')) return
     showToast(`Script sync failed: ${err}`)
   })
 
@@ -290,6 +291,10 @@ function wireSettingsPanel() {
       btn.disabled = false
       btn.textContent = 'Check for Updates'
     }
+  })
+
+  document.getElementById('btn-reregister').addEventListener('click', () => {
+    api.device.reregister()
   })
 }
 
