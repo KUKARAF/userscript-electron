@@ -86,6 +86,16 @@ export async function fetchBrowsingSessions(token) {
   return res.json()
 }
 
+export async function createBrowsingSession(token, name) {
+  const res = await fetch(`${BASE}/me/browsing-sessions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) throw new Error(`createBrowsingSession ${res.status}: ${await res.text()}`)
+  return res.json()
+}
+
 export async function addSessionPage(token, sessionId, url) {
   const res = await fetch(`${BASE}/me/browsing-sessions/${sessionId}/pages`, {
     method: 'POST',

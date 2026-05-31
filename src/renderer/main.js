@@ -232,13 +232,13 @@ function wireSettingsPanel() {
   })
 
   document.getElementById('btn-add-page').addEventListener('click', async () => {
-    if (!firstSessionId) {
-      showToast('Create a browsing session in the dashboard first')
-      return
-    }
     const url = prompt('Page URL:')
     if (!url || !url.trim()) return
     try {
+      if (!firstSessionId) {
+        const session = await api.sessions.create()
+        firstSessionId = session.id
+      }
       await api.sessions.addPage({ sessionId: firstSessionId, url: url.trim() })
       await refreshPages()
     } catch (err) {
@@ -266,14 +266,6 @@ function wireSettingsPanel() {
 function renderPagesList() {
   const list = document.getElementById('pages-list')
   list.innerHTML = ''
-
-  if (pages.length === 0 && !firstSessionId) {
-    const hint = document.createElement('p')
-    hint.className = 'settings-hint'
-    hint.textContent = 'No sessions found. Create one at the dashboard first.'
-    list.appendChild(hint)
-    return
-  }
 
   for (const page of pages) {
     const row = document.createElement('div')
