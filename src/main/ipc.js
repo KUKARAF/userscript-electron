@@ -4,7 +4,7 @@ import { autoUpdater } from 'electron-updater'
 import store from './store.js'
 import {
   uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts,
-  fetchBrowsingSessions, addSessionPage, removeSessionPage, reportError,
+  fetchBrowsingSessions, createBrowsingSession, addSessionPage, removeSessionPage, reportError,
 } from './api.js'
 import { loadToken, saveToken, callWithAutoReregister } from './registration.js'
 
@@ -61,6 +61,10 @@ export function registerIpcHandlers(mainWindow) {
 
   ipcMain.handle('api:fetch-sessions', () =>
     callWithAutoReregister(() => fetchBrowsingSessions(loadToken()))
+  )
+
+  ipcMain.handle('api:create-session', () =>
+    callWithAutoReregister(() => createBrowsingSession(loadToken(), 'Default'))
   )
 
   ipcMain.handle('api:add-page', (_, { sessionId, url }) =>
