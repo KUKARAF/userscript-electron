@@ -135,7 +135,12 @@
       <section class="settings-section">
         <h3>Pages</h3>
         <div id="pages-list" class="pages-list"></div>
-        <button id="btn-add-page" class="btn-secondary">+ Add Page</button>
+        <div id="add-page-form" style="display:flex;gap:6px;margin-top:6px;">
+          <input id="add-page-input" type="text" placeholder="https://..." style="flex:1;display:none;" />
+          <button id="btn-add-page" class="btn-secondary">+ Add Page</button>
+          <button id="btn-add-page-confirm" class="btn-secondary" style="display:none;">Add</button>
+          <button id="btn-add-page-cancel" class="btn-secondary" style="display:none;">✕</button>
+        </div>
       </section>
     </div>
     <div class="settings-footer">

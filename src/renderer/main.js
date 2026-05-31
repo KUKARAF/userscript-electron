@@ -231,19 +231,49 @@ function wireSettingsPanel() {
     showToast('API token saved')
   })
 
-  document.getElementById('btn-add-page').addEventListener('click', async () => {
-    const url = prompt('Page URL:')
-    if (!url || !url.trim()) return
+  const addPageInput = document.getElementById('add-page-input')
+  const btnAddPage = document.getElementById('btn-add-page')
+  const btnConfirm = document.getElementById('btn-add-page-confirm')
+  const btnCancel = document.getElementById('btn-add-page-cancel')
+
+  const showAddForm = () => {
+    addPageInput.style.display = ''
+    btnConfirm.style.display = ''
+    btnCancel.style.display = ''
+    btnAddPage.style.display = 'none'
+    addPageInput.value = ''
+    addPageInput.focus()
+  }
+
+  const hideAddForm = () => {
+    addPageInput.style.display = 'none'
+    btnConfirm.style.display = 'none'
+    btnCancel.style.display = 'none'
+    btnAddPage.style.display = ''
+  }
+
+  const submitAddPage = async () => {
+    const url = addPageInput.value.trim()
+    if (!url) return
+    hideAddForm()
     try {
       if (!firstSessionId) {
         const session = await api.sessions.create()
         firstSessionId = session.id
       }
-      await api.sessions.addPage({ sessionId: firstSessionId, url: url.trim() })
+      await api.sessions.addPage({ sessionId: firstSessionId, url })
       await refreshPages()
     } catch (err) {
       showToast(`Failed to add page: ${err.message}`)
     }
+  }
+
+  btnAddPage.addEventListener('click', showAddForm)
+  btnConfirm.addEventListener('click', submitAddPage)
+  btnCancel.addEventListener('click', hideAddForm)
+  addPageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitAddPage()
+    if (e.key === 'Escape') hideAddForm()
   })
 
   document.getElementById('btn-check-scripts').addEventListener('click', async () => {
