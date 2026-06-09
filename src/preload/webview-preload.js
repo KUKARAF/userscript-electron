@@ -17,7 +17,7 @@ ipcRenderer.on('inject-scripts', (_, scripts) => {
 if (window.opener === null) {
   const originalOpen = window.open
   window.open = function(url, target, features) {
-    if (url) {
+    if (url && !url.startsWith('blob:')) {
       window.location.href = url
       return window
     }

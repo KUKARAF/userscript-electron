@@ -147,10 +147,12 @@ function renderWebviews() {
         autoReportError(page.id, e.validatedURL || page.url, e.errorDescription || `error ${e.errorCode}`)
       })
 
-      // Intercept new window attempts and redirect to same webview
+      // Intercept new window attempts and redirect to same webview (blob: URLs are blocked — handled via overlay in page)
       wv.addEventListener('new-window', (e) => {
         e.preventDefault()
-        wv.src = e.url
+        if (!e.url.startsWith('blob:')) {
+          wv.src = e.url
+        }
       })
 
       container.appendChild(wv)
