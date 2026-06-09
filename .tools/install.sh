@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+echo "install.sh version 0.1"
 set -e
 
 REPO="KUKARAF/userscript-electron"
