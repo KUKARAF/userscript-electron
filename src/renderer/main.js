@@ -111,7 +111,7 @@ function renderWebviews() {
   for (const page of pages) {
     if (!webviews[page.id]) {
       const wv = document.createElement('webview')
-      wv.src = page.url
+      wv.src = /^https?:\/\//.test(page.url) ? page.url : `https://${page.url}`
       wv.setAttribute('preload', `file://${webviewPreloadPath}`)
 
       wv.addEventListener('dom-ready', () => {
