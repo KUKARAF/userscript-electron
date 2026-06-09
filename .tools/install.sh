@@ -42,8 +42,8 @@ install_macos() {
   curl -fsSL -o "$tmp" "$url"
 
   echo "  Mounting..."
-  local mount_point
-  mount_point=$(hdiutil attach "$tmp" -nobrowse | grep "Apple_HFS" | awk '{for(i=3;i<=NF;i++) printf $i" "; print ""}' | xargs)
+  local mount_point="/tmp/userscript_browser_mount_$$"
+  hdiutil attach "$tmp" -nobrowse -mountpoint "$mount_point" -quiet
 
   echo "  Installing to /Applications..."
   rm -rf "$APP_PATH"
