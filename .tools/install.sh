@@ -42,8 +42,17 @@ install_macos() {
   curl -fsSL -o "$tmp" "$url"
 
   echo "  Mounting..."
-  local mount_point="/tmp/userscript_browser_mount_$$"
-  hdiutil attach "$tmp" -nobrowse -mountpoint "$mount_point" -quiet
+  local mount_point
+  mount_point=$(hdiutil attach "$tmp" -nobrowse -plist \
+    | grep -A1 '<key>mount-point</key>' \
+    | grep '<string>' \
+    | sed 's|.*<string>\(.*\)</string>.*|\1|' \
+    | tail -1)
+
+  if [ -z "$mount_point" ]; then
+    echo "Error: failed to mount DMG." >&2
+    exit 1
+  fi
 
   echo "  Installing to /Applications..."
   rm -rf "$APP_PATH"
@@ -53,7 +62,7 @@ install_macos() {
   xattr -rd com.apple.quarantine "$APP_PATH"
 
   echo "  Cleaning up..."
-  hdiutil detach "$mount_point" -quiet
+  hdiutil detach "$mount_point" -quiet 2>/dev/null || true
   rm -f "$tmp"
 }
 
