@@ -41,25 +41,35 @@ install_macos() {
   echo "  Downloading ${dmg}..."
   curl -fsSL -o "$tmp" "$url"
 
-  echo "  Mounting..."
+  echo "  Mounting (DMG: $tmp)..."
+  local plist_output
+  plist_output=$(hdiutil attach "$tmp" -nobrowse -plist 2>&1)
+  echo "  hdiutil exit code: $?"
+  echo "  hdiutil output: $plist_output"
+
   local mount_point
-  mount_point=$(hdiutil attach "$tmp" -nobrowse -plist \
+  mount_point=$(echo "$plist_output" \
     | grep -A1 '<key>mount-point</key>' \
     | grep '<string>' \
     | sed 's|.*<string>\(.*\)</string>.*|\1|' \
     | tail -1)
+
+  echo "  Resolved mount point: '$mount_point'"
 
   if [ -z "$mount_point" ]; then
     echo "Error: failed to mount DMG." >&2
     exit 1
   fi
 
+  echo "  DMG contents:"
+  ls -la "$mount_point" 2>&1 || echo "  (could not list mount point)"
+
   echo "  Installing to /Applications..."
   rm -rf "$APP_PATH"
-  cp -R "${mount_point}/${APP_NAME}.app" /Applications/
+  cp -Rv "${mount_point}/${APP_NAME}.app" /Applications/ 2>&1
 
   echo "  Removing quarantine..."
-  xattr -rd com.apple.quarantine "$APP_PATH"
+  xattr -rd com.apple.quarantine "$APP_PATH" 2>&1 || true
 
   echo "  Cleaning up..."
   hdiutil detach "$mount_point" -quiet 2>/dev/null || true
