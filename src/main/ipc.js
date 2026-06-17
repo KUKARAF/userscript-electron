@@ -1,4 +1,4 @@
-import { ipcMain, app } from 'electron'
+import { ipcMain, app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { autoUpdater } from 'electron-updater'
 import store from './store.js'
@@ -9,7 +9,9 @@ import {
 } from './api.js'
 import { loadToken, saveToken, callApi, callWithAutoReregister, ensureRegistered } from './registration.js'
 
-export function registerIpcHandlers(mainWindow) {
+export function registerIpcHandlers() {
+  const getWin = () => BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+
   ipcMain.handle('store:get', (_, key) => store.get(key))
   ipcMain.handle('store:set', (_, key, value) => store.set(key, value))
   ipcMain.handle('app:get-version', () => app.getVersion())
@@ -17,11 +19,11 @@ export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('paths:webview-preload', () =>
     join(__dirname, '../preload/webview-preload.js')
   )
-  ipcMain.handle('window:minimize', () => mainWindow.minimize())
+  ipcMain.handle('window:minimize', () => getWin()?.minimize())
   ipcMain.handle('window:maximize', () => {
-    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize()
+    const win = getWin(); win?.isMaximized() ? win.unmaximize() : win?.maximize()
   })
-  ipcMain.handle('window:close', () => mainWindow.close())
+  ipcMain.handle('window:close', () => getWin()?.close())
 
   // --- Token ---
 
@@ -95,8 +97,9 @@ export function registerIpcHandlers(mainWindow) {
   ipcMain.handle('updater:download', () => autoUpdater.downloadUpdate())
   ipcMain.handle('updater:install', () => autoUpdater.quitAndInstall())
 
-  // --- Keyboard shortcuts (intercepted before webview consumes them) ---
+}
 
+export function registerWindowHandlers(mainWindow) {
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.type !== 'keyDown') return
     const mod = process.platform === 'darwin' ? input.meta : input.control

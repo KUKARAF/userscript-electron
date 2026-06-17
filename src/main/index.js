@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
-import { registerIpcHandlers } from './ipc.js'
+import { registerIpcHandlers, registerWindowHandlers } from './ipc.js'
 import { ensureRegistered, loadToken } from './registration.js'
 import { registerUpdater } from './updater.js'
 import { fetchAssignedScripts } from './api.js'
@@ -29,7 +29,7 @@ function createWindow() {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
-  registerIpcHandlers(win)
+  registerWindowHandlers(win)
   registerUpdater(win)
   startScriptSync(win)
 
@@ -54,6 +54,7 @@ function startScriptSync(win) {
 }
 
 app.whenReady().then(async () => {
+  registerIpcHandlers()
   await ensureRegistered()
   createWindow()
 })
