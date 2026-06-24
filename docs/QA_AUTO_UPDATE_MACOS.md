@@ -10,6 +10,20 @@ This guide walks through verifying the full update flow: detection → download 
 
 ---
 
+## Where macOS builds come from
+
+**macOS builds are published exclusively via GitHub Actions**, not SourceHut CI.
+
+- Repository: https://github.com/KUKARAF/userscript-electron
+- The `.github/workflows/release.yml` workflow runs on `macos-latest` only and publishes
+  the `.dmg` files and `latest-mac.yml` metadata directly to GitHub Releases.
+- SourceHut CI handles Windows and Linux builds.
+
+This means macOS DMG assets will only appear on the GitHub Releases page after a `v*` tag
+is pushed to the GitHub remote.
+
+---
+
 ## Prerequisites
 
 - macOS 12 or later
@@ -21,7 +35,7 @@ This guide walks through verifying the full update flow: detection → download 
 ## Step 1 — Install the old version
 
 1. Go to: https://github.com/KUKARAF/userscript-electron/releases
-2. Find the release **before v1.5.0** (e.g. `v1.4.c77ecaa` or the highest tag below v1.5.0).
+2. Find the release **before v1.5.0** (e.g. the highest tag below v1.5.0).
 3. Download the `.dmg` file for your architecture:
    - Apple Silicon (M1/M2/M3): `Userscript-Browser-x.x.x-arm64.dmg`
    - Intel Mac: `Userscript-Browser-x.x.x-x64.dmg`
@@ -88,8 +102,9 @@ Or check `About Userscript Browser` in the menu bar if present.
 2. Look for any of these messages:
    - `Updater error:` — the updater threw an exception
    - `Updater check failed:` — the GitHub API was unreachable
-   - `Update not available` — GitHub reports no newer release (check that v1.5.0 is actually published)
+   - `Update not available` — GitHub reports no newer release (check that v1.5.0 is published at https://github.com/KUKARAF/userscript-electron/releases)
 3. Confirm the installed version is genuinely older than the latest GitHub release tag.
+4. Confirm the GitHub Actions workflow completed successfully and the `latest-mac.yml` file is present in the v1.5.0 release assets.
 
 ### "Userscript Browser" is damaged and can't be opened
 
@@ -108,9 +123,11 @@ File a separate bug and re-install the previous version from the DMG.
 
 ## Notes for the team
 
+- **macOS builds only on GitHub**: the SourceHut CI does not produce macOS artifacts. If the
+  GitHub Actions run fails, there will be no macOS DMG for that release.
 - **This fix is best-effort**: `verifyUpdateCodeSignature = false` is not an officially documented
   API in electron-updater. If a future upgrade of `electron-updater` removes support for it, the
   updater will silently fall back to failing on macOS. The long-term fix is to get an Apple
   Developer certificate and sign the builds.
-- **Windows and Linux** auto-update is unaffected by this change and should continue to work as before.
+- **Windows and Linux** auto-update is handled by SourceHut CI and is unaffected by this change.
 - The update check only fires **once at startup**. There is no background polling.
