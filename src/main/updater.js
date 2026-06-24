@@ -3,6 +3,7 @@ import { autoUpdater } from 'electron-updater'
 export function registerUpdater(mainWindow) {
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.verifyUpdateCodeSignature = false
 
   autoUpdater.on('update-available', (info) => {
     mainWindow.webContents.send('update:available', { version: info.version })
