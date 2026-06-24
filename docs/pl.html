@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Userscript Browser – Instalacja</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #2f81f7;
+      --accent-hover: #388bfd;
+      --green: #3fb950;
+      --orange: #d29922;
+      --code-bg: #1f2937;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page { max-width: 780px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* ── lang switcher ── */
+    .lang-bar {
+      display: flex; justify-content: flex-end; padding: 14px 0 0;
+      gap: 6px; font-size: 0.85rem;
+    }
+    .lang-btn {
+      padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); cursor: pointer;
+      text-decoration: none; transition: all 0.15s;
+    }
+    .lang-btn.active { border-color: var(--accent); color: var(--accent); background: #0d1f3c; }
+    .lang-btn:hover { color: var(--text); text-decoration: none; }
+
+    /* ── hero ── */
+    .hero {
+      text-align: center;
+      padding: 56px 0 48px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-icon {
+      width: 80px; height: 80px;
+      background: var(--accent);
+      border-radius: 20px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 40px; margin-bottom: 20px;
+    }
+    .hero h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 10px; }
+    .hero .tagline { font-size: 1.1rem; color: var(--muted); max-width: 500px; margin: 0 auto 10px; }
+    .hero .sub-tagline { font-size: 0.92rem; color: var(--muted); margin-bottom: 36px; }
+
+    /* ── chip detector ── */
+    .chip-notice {
+      background: #0d1f3c;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 0.92rem;
+      margin-bottom: 20px;
+      display: inline-block;
+      max-width: 500px;
+    }
+    .chip-notice strong { color: var(--accent); font-size: 1rem; }
+
+    /* ── download buttons ── */
+    .download-group {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 26px;
+      border-radius: 10px;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); text-decoration: none; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #21262d; text-decoration: none; }
+    .btn-icon { font-size: 1.3rem; }
+    .btn .sub { font-size: 0.72rem; font-weight: 400; opacity: 0.75; display: block; line-height: 1.2; margin-top: 3px; }
+    .version-label { font-size: 0.82rem; color: var(--muted); }
+
+    /* ── section ── */
+    .section { padding: 52px 0 0; }
+    .section > h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+    .section > .section-intro { color: var(--muted); font-size: 0.93rem; margin-bottom: 28px; }
+
+    /* ── big steps ── */
+    .steps { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 0 16px;
+      padding-bottom: 32px;
+      position: relative;
+    }
+    /* connector line */
+    .step:not(:last-child) .step-num::after {
+      content: '';
+      position: absolute;
+      left: 25px; top: 52px;
+      width: 2px;
+      height: calc(100% - 52px);
+      background: var(--border);
+    }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--accent);
+      color: #fff; font-weight: 800; font-size: 1.3rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; position: relative; z-index: 1;
+    }
+    .step-body { padding-top: 10px; }
+    .step-body h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .step-body p  { color: var(--muted); font-size: 0.93rem; margin-bottom: 10px; }
+    .step-body p:last-child { margin-bottom: 0; }
+    .step-body p strong { color: var(--text); }
+
+    /* ── image placeholder / visual hint ── */
+    .visual-hint {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: 10px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .visual-hint .vh-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .visual-hint strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+    /* ── code block ── */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85rem;
+      color: #e6edf3;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-top: 10px;
+    }
+    .code-block code { flex: 1; word-break: break-all; user-select: all; }
+    .copy-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 5px 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .copy-btn:hover { color: var(--text); background: #21262d; }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    /* ── callout boxes ── */
+    .callout {
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 0.9rem;
+      margin-top: 12px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .callout-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+    .callout-body strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 0.95rem; }
+    .callout-body p { color: var(--muted); margin: 0; font-size: 0.88rem; }
+    .callout-blue  { background: #0d1f3c; border: 1px solid #1d4ed8; }
+    .callout-yellow { background: #1a1500; border: 1px solid #713f12; }
+    .callout-green  { background: #0a1f0a; border: 1px solid #166534; }
+
+    /* ── updates flow ── */
+    .update-flow {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .update-pill {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 14px; font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .update-arrow { color: var(--muted); font-size: 1.1rem; }
+
+    /* ── success box ── */
+    .success-box {
+      background: #0a1f0a;
+      border: 1px solid var(--green);
+      border-radius: 10px;
+      padding: 20px 24px;
+      text-align: center;
+      margin-top: 40px;
+    }
+    .success-box .big { font-size: 2.5rem; margin-bottom: 8px; }
+    .success-box h3 { font-size: 1.1rem; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+    .success-box p { font-size: 0.9rem; color: var(--muted); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 64px; padding-top: 24px;
+      text-align: center; color: var(--muted); font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 520px) {
+      .hero h1 { font-size: 1.7rem; }
+      .btn { width: 100%; justify-content: center; }
+      .download-group { flex-direction: column; }
+      .step { grid-template-columns: 44px 1fr; }
+      .step-num { width: 44px; height: 44px; font-size: 1.1rem; }
+      .step:not(:last-child) .step-num::after { left: 21px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Lang switcher ── -->
+  <div class="lang-bar">
+    <a href="index.html" class="lang-btn">🇬🇧 English</a>
+    <a href="pl.html"    class="lang-btn active">🇵🇱 Polski</a>
+  </div>
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="hero-icon">🌐</div>
+    <h1>Userscript Browser</h1>
+    <p class="tagline">Prosta przeglądarka, która automatycznie uruchamia Twoje skrypty z <a href="https://userscripts.osmosis.page" target="_blank">userscripts.osmosis.page</a>.</p>
+    <p class="sub-tagline">Poniżej znajdziesz instrukcję instalacji krok po kroku. Zajmie to około 2 minuty.</p>
+
+    <div class="chip-notice" id="chip-notice">
+      🔍 Sprawdzam jakiego Maca używasz…
+    </div>
+
+    <div class="download-group">
+      <a id="dl-arm64" href="#" class="btn btn-primary">
+        <span class="btn-icon">⬇</span>
+        <span>
+          Pobierz dla Mac
+          <span class="sub">Apple Silicon (M1 / M2 / M3 / M4)</span>
+        </span>
+      </a>
+      <a id="dl-intel" href="#" class="btn btn-secondary">
+        <span class="btn-icon">⬇</span>
+        <span>
+          Pobierz dla Mac
+          <span class="sub">Intel (starsze modele)</span>
+        </span>
+      </a>
+    </div>
+    <div class="version-label">
+      <span id="version-text">Ładowanie najnowszej wersji…</span>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/KUKARAF/userscript-electron/releases" target="_blank">Wszystkie wersje</a>
+    </div>
+  </div>
+
+  <!-- ── Chip guide ── -->
+  <div class="section">
+    <h2>Nie wiesz który plik pobrać?</h2>
+    <p class="section-intro">Kliknij  w lewym górnym rogu ekranu → <strong>„O tym Macu"</strong> i sprawdź co jest napisane przy „Czip" lub „Procesor".</p>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
+      <div class="visual-hint" style="flex:1;min-width:220px;">
+        <div class="vh-icon">🍎</div>
+        <div>
+          <strong>Widzisz „Apple M1", „M2", „M3" lub „M4"?</strong>
+          Pobierz wersję <strong>Apple Silicon</strong> (niebieski przycisk powyżej).
+        </div>
+      </div>
+      <div class="visual-hint" style="flex:1;min-width:220px;">
+        <div class="vh-icon">🔵</div>
+        <div>
+          <strong>Widzisz „Intel Core i5", „i7" lub podobne?</strong>
+          Pobierz wersję <strong>Intel</strong> (szary przycisk powyżej).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Install steps ── -->
+  <div class="section">
+    <h2>Instalacja krok po kroku</h2>
+    <p class="section-intro">Wykonaj każdy krok po kolei. Nie pomijaj żadnego.</p>
+
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Otwórz pobrany plik .dmg</h3>
+          <p>Po zakończeniu pobierania kliknij dwukrotnie plik <strong>Userscript-Browser-….dmg</strong>. Znajdziesz go w folderze <strong>Pobrane</strong> (Downloads) lub na dole okna przeglądarki.</p>
+          <div class="visual-hint">
+            <div class="vh-icon">💡</div>
+            <div><strong>Co zobaczysz?</strong> Otworzy się okno z ikoną aplikacji po lewej i skrótem do folderu Aplikacje po prawej.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Przeciągnij aplikację do folderu Aplikacje</h3>
+          <p>Chwyć ikonę <strong>Userscript Browser</strong> i przeciągnij ją na folder <strong>Applications</strong> (Aplikacje) po prawej stronie. Poczekaj aż kopiowanie się zakończy.</p>
+          <div class="visual-hint">
+            <div class="vh-icon">🖱️</div>
+            <div><strong>Wskazówka:</strong> Kliknij i przytrzymaj ikonę, a następnie przesuń ją w prawo na folder Applications. Puść przycisk myszy gdy ikona znajdzie się nad folderem.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Otwórz Terminal i wklej poniższe polecenie</h3>
+          <p>macOS blokuje aplikacje bez certyfikatu Apple (który kosztuje 400 zł/rok). Trzeba raz odblokować aplikację ręcznie.</p>
+
+          <div class="callout callout-blue">
+            <div class="callout-icon">📌</div>
+            <div class="callout-body">
+              <strong>Jak otworzyć Terminal?</strong>
+              <p>Naciśnij jednocześnie klawisze <strong>⌘ Command + Spacja</strong>, wpisz <strong>Terminal</strong> i naciśnij <strong>Enter</strong>. Otworzy się czarne (lub białe) okno z migającym kursorem — to właśnie Terminal.</p>
+            </div>
+          </div>
+
+          <p style="margin-top:14px;">Skopiuj poniższe polecenie (kliknij przycisk <strong>Kopiuj</strong>) i wklej je w oknie Terminala (<strong>⌘ Command + V</strong>), a następnie naciśnij <strong>Enter</strong>:</p>
+          <div class="code-block">
+            <code>xattr -rd com.apple.quarantine "/Applications/Userscript Browser.app"</code>
+            <button class="copy-btn" onclick="copyCode(this)">Kopiuj</button>
+          </div>
+
+          <div class="callout callout-yellow" style="margin-top:12px;">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-body">
+              <strong>Nie widzisz żadnej odpowiedzi po wciśnięciu Enter?</strong>
+              <p>To normalne! Terminal nie wypisuje nic gdy polecenie działa poprawnie. Możesz zamknąć okno Terminala.</p>
+            </div>
+          </div>
+
+          <div class="callout callout-blue" style="margin-top:8px;">
+            <div class="callout-icon">🔒</div>
+            <div class="callout-body">
+              <strong>Czy to jest bezpieczne?</strong>
+              <p>Tak. To polecenie usuwa tylko specjalny znacznik (quarantine), który macOS nakłada na pliki pobrane z internetu. Nie zmienia ustawień systemowych ani innych aplikacji.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Uruchom Userscript Browser</h3>
+          <p>Otwórz folder <strong>Aplikacje</strong> (Applications) i kliknij dwukrotnie ikonę <strong>Userscript Browser</strong>. Możesz też użyć Spotlight — naciśnij <strong>⌘ Command + Spacja</strong>, wpisz <strong>Userscript</strong> i naciśnij Enter.</p>
+          <div class="callout callout-green" style="margin-top:8px;">
+            <div class="callout-icon">✅</div>
+            <div class="callout-body">
+              <strong>Aplikacja się uruchomiła? Gotowe!</strong>
+              <p>Jeśli aplikacja się otworzyła — instalacja zakończona sukcesem. Możesz usunąć plik .dmg z folderu Pobrane.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Success box -->
+    <div class="success-box">
+      <div class="big">🎉</div>
+      <h3>Instalacja gotowa!</h3>
+      <p>Aplikacja jest zainstalowana i gotowa do użycia. Aktualizacje będą pojawiać się automatycznie po uruchomieniu aplikacji.</p>
+    </div>
+  </div>
+
+  <!-- ── Alternatywa: jeden terminal ── -->
+  <div class="section">
+    <h2>Alternatywa: instalacja jednym poleceniem</h2>
+    <p class="section-intro">Jeśli wolisz, możesz zainstalować aplikację używając tylko Terminala. Polecenie poniżej samo wykryje Twój procesor, pobierze właściwą wersję i odblokuje aplikację.</p>
+    <div class="code-block">
+      <code>curl -fsSL https://raw.githubusercontent.com/KUKARAF/userscript-electron/main/.tools/install.sh | bash</code>
+      <button class="copy-btn" onclick="copyCode(this)">Kopiuj</button>
+    </div>
+    <div class="callout callout-blue" style="margin-top:12px;">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Jak to wkleić do Terminala?</strong>
+        <p>Otwórz Terminal (⌘ Spacja → „Terminal" → Enter), kliknij przycisk Kopiuj powyżej, wklej w Terminalu (⌘ V) i naciśnij Enter. Instalacja zajmie chwilę.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Aktualizacje ── -->
+  <div class="section">
+    <h2>Jak działają aktualizacje?</h2>
+    <p class="section-intro">Nie musisz nic robić ręcznie — aplikacja sama sprawdza czy jest nowa wersja.</p>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num" style="background:var(--green);font-size:1.4rem;">🔔</div>
+        <div class="step-body">
+          <h3>Aplikacja powiadomi Cię o aktualizacji</h3>
+          <p>Kilka sekund po uruchomieniu aplikacji, jeśli dostępna jest nowa wersja, u góry okna pojawi się pasek z informacją.</p>
+          <div class="update-flow">
+            <span class="update-pill">Pojawia się pasek 🔔</span>
+            <span class="update-arrow">→</span>
+            <span class="update-pill">Kliknij <strong>Pobierz</strong></span>
+            <span class="update-arrow">→</span>
+            <span class="update-pill">Kliknij <strong>Uruchom ponownie</strong></span>
+            <span class="update-arrow">→</span>
+            <span class="update-pill">Gotowe ✓</span>
+          </div>
+          <div class="callout callout-yellow" style="margin-top:14px;">
+            <div class="callout-icon">🖥️</div>
+            <div class="callout-body">
+              <strong>Uwaga: otworzy się okno Terminala</strong>
+              <p>Po kliknięciu „Uruchom ponownie" na chwilę pojawi się czarne okno Terminala. To <strong>normalne</strong> — aplikacja w ten sposób instaluje aktualizację (bo nie ma certyfikatu Apple). Terminal zamknie się automatycznie po zakończeniu, a aplikacja uruchomi się ponownie.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" style="padding-bottom:0;">
+        <div class="step-num" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:1.2rem;">↺</div>
+        <div class="step-body">
+          <h3>Ręczna aktualizacja (opcjonalnie)</h3>
+          <p>Możesz też zaktualizować aplikację ręcznie wklejając poniższe polecenie do Terminala. Jeśli masz już najnowszą wersję — nic się nie zmieni.</p>
+          <div class="code-block">
+            <code>curl -fsSL https://raw.githubusercontent.com/KUKARAF/userscript-electron/main/.tools/install.sh | bash</code>
+            <button class="copy-btn" onclick="copyCode(this)">Kopiuj</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Problemy ── -->
+  <div class="section">
+    <h2>Masz problem? Najczęstsze rozwiązania</h2>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+
+      <div class="callout callout-yellow">
+        <div class="callout-icon">❌</div>
+        <div class="callout-body">
+          <strong>„Nie można otworzyć aplikacji Userscript Browser, bo nie można sprawdzić, czy nie zawiera złośliwego oprogramowania"</strong>
+          <p>Wykonaj ponownie krok 3 — upewnij się że wklejasz i wciskasz Enter. Polecenie nie wypisuje nic gdy działa poprawnie.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-yellow">
+        <div class="callout-icon">❌</div>
+        <div class="callout-body">
+          <strong>„Userscript Browser jest uszkodzona i nie można jej otworzyć"</strong>
+          <p>Dokładnie to samo rozwiązanie — otwórz Terminal i wklej polecenie z Kroku 3.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-icon">❓</div>
+        <div class="callout-body">
+          <strong>Terminal wypisał błąd po wklejeniu polecenia</strong>
+          <p>Upewnij się że aplikacja jest w folderze <strong>Aplikacje (Applications)</strong>, a nie na Biurku lub w innym miejscu. Jeśli przeniosłeś ją w inne miejsce, powtórz krok 2.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      <a href="https://github.com/KUKARAF/userscript-electron" target="_blank">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/KUKARAF/userscript-electron/releases" target="_blank">Wersje do pobrania</a>
+      &nbsp;·&nbsp;
+      <a href="https://userscripts.osmosis.page" target="_blank">userscripts.osmosis.page</a>
+    </p>
+  </footer>
+
+</div>
+
+<script>
+  // Auto-detect chip
+  const chipNotice = document.getElementById('chip-notice')
+  const ua = navigator.userAgent
+  // Safari on Apple Silicon reports arm or the platform check below
+  // We can't perfectly detect from JS alone, so we show a helpful message
+  if (ua.includes('Mac')) {
+    // Check if it could be Apple Silicon (rough heuristic via canvas or just inform both)
+    chipNotice.innerHTML = '🍎 Wykryto Maca — jeśli masz <strong>M1/M2/M3/M4</strong> użyj niebieskiego przycisku. W razie wątpliwości sprawdź  → „O tym Macu".'
+  } else {
+    chipNotice.innerHTML = '⚠️ Wygląda na to że nie używasz Maca. Ta aplikacja działa tylko na macOS.'
+    chipNotice.style.borderColor = 'var(--orange)'
+    chipNotice.style.background = '#1a1500'
+  }
+
+  // Fetch latest release
+  fetch('https://api.github.com/repos/KUKARAF/userscript-electron/releases/latest')
+    .then(r => r.json())
+    .then(data => {
+      const version = data.tag_name || ''
+      document.getElementById('version-text').textContent = version ? `Najnowsza wersja: ${version}` : 'Najnowsza wersja'
+
+      const arm64 = data.assets?.find(a => a.name.includes('arm64') && a.name.endsWith('.dmg'))
+      const intel = data.assets?.find(a => !a.name.includes('arm64') && a.name.endsWith('.dmg') && !a.name.endsWith('.blockmap'))
+
+      if (arm64) document.getElementById('dl-arm64').href = arm64.browser_download_url
+      if (intel) document.getElementById('dl-intel').href = intel.browser_download_url
+
+      if (!arm64 && !intel) {
+        const rel = 'https://github.com/KUKARAF/userscript-electron/releases/latest'
+        document.getElementById('dl-arm64').href = rel
+        document.getElementById('dl-intel').href = rel
+      }
+    })
+    .catch(() => {
+      const rel = 'https://github.com/KUKARAF/userscript-electron/releases/latest'
+      document.getElementById('dl-arm64').href = rel
+      document.getElementById('dl-intel').href = rel
+      document.getElementById('version-text').textContent = 'Zobacz wszystkie wersje'
+    })
+
+  // Copy button
+  function copyCode(btn) {
+    const code = btn.previousElementSibling.textContent
+    navigator.clipboard.writeText(code).then(() => {
+      btn.textContent = 'Skopiowano!'
+      btn.classList.add('copied')
+      setTimeout(() => { btn.textContent = 'Kopiuj'; btn.classList.remove('copied') }, 2000)
+    })
+  }
+</script>
+</body>
+</html>

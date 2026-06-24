@@ -166,6 +166,18 @@
     footer a { color: var(--muted); }
     footer a:hover { color: var(--text); }
 
+    .lang-bar {
+      display: flex; justify-content: flex-end; padding: 14px 0 0;
+      gap: 6px; font-size: 0.85rem;
+    }
+    .lang-btn {
+      padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); cursor: pointer;
+      text-decoration: none; transition: all 0.15s;
+    }
+    .lang-btn.active { border-color: var(--accent); color: var(--accent); background: #0d1f3c; }
+    .lang-btn:hover { color: var(--text); text-decoration: none; }
+
     @media (max-width: 500px) {
       .hero h1 { font-size: 1.8rem; }
       .btn { width: 100%; justify-content: center; }
@@ -175,6 +187,12 @@
 </head>
 <body>
 <div class="page">
+
+  <!-- ── Lang switcher ── -->
+  <div class="lang-bar">
+    <a href="index.html" class="lang-btn active">🇬🇧 English</a>
+    <a href="pl.html"    class="lang-btn">🇵🇱 Polski</a>
+  </div>
 
   <!-- ── Hero ── -->
   <div class="hero">
