@@ -1,6 +1,7 @@
 import { ipcMain, app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { autoUpdater } from 'electron-updater'
+import { triggerInstall } from './updater.js'
 import store from './store.js'
 import {
   uploadHtmlChunk, createTask, pollStatus, approveTask, rejectTask, fetchAssignedScripts,
@@ -95,7 +96,7 @@ export function registerIpcHandlers() {
   // --- Auto-Update ---
 
   ipcMain.handle('updater:download', () => autoUpdater.downloadUpdate())
-  ipcMain.handle('updater:install', () => autoUpdater.quitAndInstall())
+  ipcMain.handle('updater:install', () => triggerInstall())
 
 }
 

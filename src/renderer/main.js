@@ -528,6 +528,7 @@ function wireUpdater() {
   api.updater.onReady(() => {
     bannerText.textContent = 'Update ready to install'
     actionBtn.textContent = 'Restart Now'
+    actionBtn.disabled = false
     actionBtn.onclick = installUpdate
   })
 
