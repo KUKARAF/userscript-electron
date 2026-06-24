@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Userscript Browser</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #2f81f7;
+      --accent-hover: #388bfd;
+      --green: #3fb950;
+      --code-bg: #1f2937;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── layout ── */
+    .page { max-width: 780px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* ── hero ── */
+    .hero {
+      text-align: center;
+      padding: 72px 0 56px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-icon {
+      width: 80px; height: 80px;
+      background: var(--accent);
+      border-radius: 20px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      margin-bottom: 24px;
+    }
+    .hero h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: 12px; }
+    .hero p  { font-size: 1.1rem; color: var(--muted); max-width: 480px; margin: 0 auto 36px; }
+
+    /* ── download buttons ── */
+    .download-group {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: background 0.15s, opacity 0.15s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); text-decoration: none; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #21262d; text-decoration: none; }
+    .btn-icon { font-size: 1.2rem; }
+    .btn .sub { font-size: 0.72rem; font-weight: 400; opacity: 0.75; display: block; line-height: 1; margin-top: 2px; }
+    .version-label { font-size: 0.82rem; color: var(--muted); }
+    .version-label a { color: var(--muted); }
+    .version-label a:hover { color: var(--text); }
+
+    /* ── steps ── */
+    .section { padding: 48px 0 0; }
+    .section h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 28px; }
+
+    .steps { display: flex; flex-direction: column; gap: 24px; }
+    .step {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 0 16px;
+    }
+    .step-num {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--accent);
+      color: #fff; font-weight: 700; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .step-body h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    .step-body p  { color: var(--muted); font-size: 0.93rem; margin-bottom: 10px; }
+    .step-body p:last-child { margin-bottom: 0; }
+
+    /* ── code block ── */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85rem;
+      color: #e6edf3;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-top: 10px;
+    }
+    .code-block code { flex: 1; word-break: break-all; }
+    .copy-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+    }
+    .copy-btn:hover { color: var(--text); background: #21262d; }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    /* ── note / callout ── */
+    .note {
+      background: #111827;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .note strong { color: var(--text); }
+
+    /* ── arch selector ── */
+    .arch-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .arch-tab {
+      padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); font-size: 0.88rem;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .arch-tab.active { border-color: var(--accent); color: var(--accent); background: #0d1f3c; }
+    .arch-content { display: none; }
+    .arch-content.active { display: block; }
+
+    /* ── updates section ── */
+    .update-flow {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .update-pill {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 14px; font-size: 0.85rem;
+    }
+    .update-arrow { color: var(--muted); font-size: 1.1rem; }
+
+    /* ── footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 64px; padding-top: 24px;
+      text-align: center; color: var(--muted); font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 500px) {
+      .hero h1 { font-size: 1.8rem; }
+      .btn { width: 100%; justify-content: center; }
+      .download-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="hero-icon">🌐</div>
+    <h1>Userscript Browser</h1>
+    <p>A minimal browser that automatically injects your userscripts from <a href="https://userscripts.osmosis.page" target="_blank">userscripts.osmosis.page</a>.</p>
+
+    <div class="download-group">
+      <a id="dl-arm64" href="#" class="btn btn-primary">
+        <span class="btn-icon">⬇</span>
+        <span>
+          Download for Mac
+          <span class="sub">Apple Silicon (M1 / M2 / M3)</span>
+        </span>
+      </a>
+      <a id="dl-intel" href="#" class="btn btn-secondary">
+        <span class="btn-icon">⬇</span>
+        <span>
+          Download for Mac
+          <span class="sub">Intel</span>
+        </span>
+      </a>
+    </div>
+    <div class="version-label">
+      <span id="version-text">Loading latest version…</span>
+      &nbsp;·&nbsp;
+      <a id="all-releases" href="https://github.com/KUKARAF/userscript-electron/releases" target="_blank">All releases</a>
+    </div>
+  </div>
+
+  <!-- ── Install ── -->
+  <div class="section">
+    <h2>How to install</h2>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Download the DMG above</h3>
+          <p>Pick <strong>Apple Silicon</strong> if your Mac has an M1, M2, or M3 chip. Pick <strong>Intel</strong> if it's an older Intel Mac. Not sure? Click the  menu → <em>About This Mac</em> and look for "Chip" or "Processor".</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Open the DMG and drag to Applications</h3>
+          <p>Double-click the downloaded <code>.dmg</code> file, then drag <strong>Userscript Browser</strong> into the <strong>Applications</strong> folder.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Remove the macOS quarantine flag</h3>
+          <p>macOS blocks apps that aren't signed with a $99/year Apple certificate. Run this once in Terminal to allow it:</p>
+          <div class="code-block">
+            <code>xattr -rd com.apple.quarantine "/Applications/Userscript Browser.app"</code>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="note">
+            <strong>How to open Terminal:</strong> Press <strong>⌘ Space</strong>, type <em>Terminal</em>, press Enter. Paste the command above and press Enter.
+          </div>
+          <div class="note" style="margin-top:8px;">
+            Alternatively, right-click (or Control-click) the app in Finder and choose <strong>Open</strong>, then click <strong>Open</strong> in the dialog. macOS will remember your choice.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Open the app</h3>
+          <p>Launch <strong>Userscript Browser</strong> from your Applications folder or Spotlight (<strong>⌘ Space</strong>). That's it.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── One-liner ── -->
+  <div class="section">
+    <h2>Install via Terminal (one command)</h2>
+    <p style="color:var(--muted);font-size:.93rem;margin-bottom:14px;">Paste this into Terminal — it detects your chip, downloads the right build, installs it, and removes the quarantine flag automatically.</p>
+    <div class="code-block">
+      <code>curl -fsSL https://raw.githubusercontent.com/KUKARAF/userscript-electron/main/.tools/install.sh | bash</code>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+  </div>
+
+  <!-- ── Updates ── -->
+  <div class="section">
+    <h2>Updates</h2>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num" style="background:var(--green);">✓</div>
+        <div class="step-body">
+          <h3>In-app updates (automatic)</h3>
+          <p>The app checks for a new release a few seconds after launch. When one is found, a banner appears at the top of the window.</p>
+          <div class="update-flow">
+            <span class="update-pill">Update available banner</span>
+            <span class="update-arrow">→</span>
+            <span class="update-pill">Click <strong>Download</strong></span>
+            <span class="update-arrow">→</span>
+            <span class="update-pill">Click <strong>Restart Now</strong></span>
+            <span class="update-arrow">→</span>
+            <span class="update-pill">Done ✓</span>
+          </div>
+          <div class="note" style="margin-top:14px;">
+            <strong>macOS note:</strong> because the app is unsigned, a Terminal window will briefly open to perform the install. You'll see it extract and replace the app, then Userscript Browser relaunches automatically. You can close the Terminal window afterwards.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);">↺</div>
+        <div class="step-body">
+          <h3>Manual update via Terminal</h3>
+          <p>Re-running the install command updates to the latest version, or does nothing if you're already up to date.</p>
+          <div class="code-block">
+            <code>curl -fsSL https://raw.githubusercontent.com/KUKARAF/userscript-electron/main/.tools/install.sh | bash</code>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      <a href="https://github.com/KUKARAF/userscript-electron" target="_blank">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/KUKARAF/userscript-electron/releases" target="_blank">Releases</a>
+      &nbsp;·&nbsp;
+      <a href="https://userscripts.osmosis.page" target="_blank">userscripts.osmosis.page</a>
+    </p>
+  </footer>
+
+</div>
+
+<script>
+  // Fetch latest release from GitHub API and populate download links
+  fetch('https://api.github.com/repos/KUKARAF/userscript-electron/releases/latest')
+    .then(r => r.json())
+    .then(data => {
+      const version = data.tag_name || ''
+      const ver = version.replace(/^v/, '')
+
+      document.getElementById('version-text').textContent = version ? `Latest: ${version}` : 'Latest release'
+
+      const arm64 = data.assets?.find(a => a.name.includes('arm64') && a.name.endsWith('.dmg'))
+      const intel = data.assets?.find(a => !a.name.includes('arm64') && a.name.endsWith('.dmg') && !a.name.endsWith('.blockmap'))
+
+      if (arm64) document.getElementById('dl-arm64').href = arm64.browser_download_url
+      if (intel) document.getElementById('dl-intel').href = intel.browser_download_url
+
+      if (!arm64 && !intel) {
+        // Fallback to releases page
+        const relPage = 'https://github.com/KUKARAF/userscript-electron/releases/latest'
+        document.getElementById('dl-arm64').href = relPage
+        document.getElementById('dl-intel').href = relPage
+      }
+    })
+    .catch(() => {
+      // Fallback silently to releases page
+      const relPage = 'https://github.com/KUKARAF/userscript-electron/releases/latest'
+      document.getElementById('dl-arm64').href = relPage
+      document.getElementById('dl-intel').href = relPage
+      document.getElementById('version-text').textContent = 'See all releases'
+    })
+
+  // Copy button
+  function copyCode(btn) {
+    const code = btn.previousElementSibling.textContent
+    navigator.clipboard.writeText(code).then(() => {
+      btn.textContent = 'Copied!'
+      btn.classList.add('copied')
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied') }, 2000)
+    })
+  }
+</script>
+</body>
+</html>
