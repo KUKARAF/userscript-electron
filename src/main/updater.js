@@ -66,6 +66,9 @@ open ${JSON.stringify(appBundlePath)}
   const scriptPath = join(app.getPath('temp'), 'userscript-update.sh')
   writeFileSync(scriptPath, script, { mode: 0o755 })
 
-  spawn('bash', [scriptPath], { detached: true, stdio: 'ignore' }).unref()
+  spawn('osascript', [
+    '-e', `tell application "Terminal" to do script "bash '${scriptPath}'"`,
+    '-e', 'tell application "Terminal" to activate'
+  ], { detached: true, stdio: 'ignore' }).unref()
   app.quit()
 }

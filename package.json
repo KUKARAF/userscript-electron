@@ -1,6 +1,6 @@
 {
   "name": "userscript-browser",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Minimal Electron browser with userscript injection",
   "main": "out/main/index.js",
   "scripts": {
