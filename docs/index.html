@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Userscript Browser</title>
+  <script>
+    // Redirect to Polish unless browser prefers English, or user manually chose English
+    (function () {
+      if (sessionStorage.getItem('lang') === 'en') return
+      var langs = (navigator.languages && navigator.languages.length)
+        ? navigator.languages : [navigator.language || 'en']
+      for (var i = 0; i < langs.length; i++) {
+        var l = langs[i].toLowerCase()
+        if (l.startsWith('en')) return          // English preferred — stay
+        if (l.startsWith('pl')) { window.location.replace('pl.html'); return }
+      }
+      window.location.replace('pl.html')        // default: Polish
+    })()
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -191,7 +205,7 @@
   <!-- ── Lang switcher ── -->
   <div class="lang-bar">
     <a href="index.html" class="lang-btn active">🇬🇧 English</a>
-    <a href="pl.html"    class="lang-btn">🇵🇱 Polski</a>
+    <a href="pl.html"    class="lang-btn" onclick="sessionStorage.removeItem('lang')">🇵🇱 Polski</a>
   </div>
 
   <!-- ── Hero ── -->
